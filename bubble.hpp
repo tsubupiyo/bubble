@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <set>
+#include <map>
 #include <array>
 #include "NamedParameter.hpp"
 #include "Vector3D.hpp"
@@ -13,6 +14,12 @@ NP_MAKE_NAMED_PARAMETER(phi);  //[0:2pi)
 NP_MAKE_NAMED_PARAMETER(u);//amplitude
 NP_MAKE_NAMED_PARAMETER(k);//index of element of P
 NP_MAKE_NAMED_PARAMETER(d);//distance between two points
+
+bool operator<(k_<int> a,k_<int> b)
+{
+   return a.value()<b.value();
+}
+
 constexpr int N_grid_points= 100;
 std::vector<std::tuple<theta_<double>,phi_<double> > > grid_points;
 std::map<k_<int>,std::array<k_<int>, 6> > network;
@@ -55,4 +62,9 @@ class Voronoi_diagram
    void generate(); //for all voronoi cells
    std::vector<Voronoi_cell> get_vertual_cells(k_<int> k, const Vector3D& p)const;//for MC
 };
+
+std::set<k_<int> > Voronoi_cell::get_neighbor()const
+{//return indexes of neighboring voronoi cells (K)
+   return K;
+}
 
