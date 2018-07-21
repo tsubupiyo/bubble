@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <set>
+#include <array>
 #include "NamedParameter.hpp"
 #include "Vector3D.hpp"
 
@@ -12,8 +13,9 @@ NP_MAKE_NAMED_PARAMETER(phi);  //[0:2pi)
 NP_MAKE_NAMED_PARAMETER(u);//amplitude
 NP_MAKE_NAMED_PARAMETER(k);//index of element of P
 NP_MAKE_NAMED_PARAMETER(d);//distance between two points
-constexpr int N_grid_point = 100;
+constexpr int N_grid_points= 100;
 std::vector<std::tuple<theta_<double>,phi_<double> > > grid_points;
+std::map<k_<int>,std::array<k_<int>, 6> > network;
 
 class Quadratic_function
 {  //y = a*x*x + b*x + c
@@ -38,10 +40,9 @@ class Voronoi_cell
    Voronoi_cell(const k_<int> i, const std::vector<Vector3D>* const ps);
    double get_volume()const;
    std::set<k_<int> > get_neighbor()const; //return indexes of neighboring voronoi cells (K)
+   void change_pointer(std::vector<Vector3D>* const ps);
    private:
-   std::tuple<u_<double>,k_<int> > get_u_min()const; //return closest distance between Pk and Pother, and index of Pother
-   void boundary_fitting();//fitting for u
-   
+   void boundary_fitting();//to determine the cell, fit u to the boundary.
 };
 
 class Voronoi_diagram
