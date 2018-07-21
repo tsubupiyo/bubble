@@ -9,7 +9,7 @@
 #include "NamedParameter.hpp"
 #include "Vector3D.hpp"
 
-NP_MAKE_NAMED_PARAMETER(theta);//[-0.5pi:0.5pi]
+NP_MAKE_NAMED_PARAMETER(theta);//[0:pi]
 NP_MAKE_NAMED_PARAMETER(phi);  //[0:2pi)
 NP_MAKE_NAMED_PARAMETER(u);//amplitude
 NP_MAKE_NAMED_PARAMETER(k);//index of element of P
