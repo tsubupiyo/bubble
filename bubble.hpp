@@ -63,10 +63,19 @@ class Voronoi_diagram
    void change_pointer(std::vector<Vector3D> const * ps);
 };
 
-
 std::set<k_<int> > Voronoi_cell::get_neighbor()const
 {//return indexes of neighboring voronoi cells (K)
    return K;
+}
+
+void Voronoi_diagram::generate()
+{
+   R.reserve(P->size());
+   for(size_t s=0, size=P->size(); s<size; ++s)
+   {
+      R.push_back(Voronoi_cell(k_<int>(static_cast<int>(s)), P));
+   } 
+   return ;
 }
 
 Quadratic_function::Quadratic_function(double a_, double b_, double c_):a(a_),b(b_),c(c_){}
