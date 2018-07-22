@@ -1,6 +1,5 @@
 #pragma once
 #include <random>
-//std::vector<std::tuple<theta_<double>,phi_<double> > > grid_points;
 
 std::mt19937_64 mt_grid(265278465287);
 
@@ -89,7 +88,7 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
             E_current=E_new;
          }
       }
-      std::cout<<s<<" "<<E_current<<std::endl;
+      //std::cout<<s<<" "<<E_current<<std::endl;
    }
    return random_points; 
 }
