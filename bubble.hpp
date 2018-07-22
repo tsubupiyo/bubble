@@ -6,6 +6,7 @@
 #include <set>
 #include <map>
 #include <array>
+#include "constexpr_math.hpp"
 #include "NamedParameter.hpp"
 #include "Vector3D.hpp"
 
