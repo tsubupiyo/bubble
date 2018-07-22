@@ -6,9 +6,9 @@
 #include <set>
 #include <map>
 #include <array>
-#include "constexpr_math.hpp"
-#include "NamedParameter.hpp"
-#include "Vector3D.hpp"
+#include "Chaperone/constexpr_math.hpp"
+#include "Chaperone/NamedParameter.hpp"
+#include "Chaperone/Vector3D.hpp"
 
 NP_MAKE_NAMED_PARAMETER(theta);//[0:pi]
 NP_MAKE_NAMED_PARAMETER(phi);  //[0:2pi)

@@ -1,0 +1,3 @@
+[submodule "Chaperone"]
+	path = Chaperone
+	url = https://github.com/toyaku-phys/Chaperone
