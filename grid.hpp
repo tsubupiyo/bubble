@@ -4,6 +4,18 @@
 std::mt19937_64 mt_grid(265278465287);
 
 #define PATH_TO_GRID_POINTS_SOURCE "GRID_POINTS_SOURCE"
+std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi();
+std::vector<std::array<size_t, 6> > generate_network(const std::vector<std::tuple<theta_<double>,phi_<double> > >& ps);
+
+const auto S2R = [](const std::tuple<theta_<double>,phi_<double> >& p)->Vector3D
+{
+   return Vector3D
+      (
+         std::sin(std::get<theta_<double>>(p).value())*std::cos(std::get<phi_<double> >(p).value()),
+         std::sin(std::get<theta_<double>>(p).value())*std::sin(std::get<phi_<double> >(p).value()),
+         std::cos(std::get<theta_<double>>(p).value())
+      ); 
+};
 
 std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi()
 {
@@ -43,15 +55,15 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
       std::get<theta_<double> >(random_points.at(i)).value() = dist_theta(mt_grid);
       std::get<phi_<double>   >(random_points.at(i)).value() = dist_phi(mt_grid);
    }
-   const auto S2R = [](const std::tuple<theta_<double>,phi_<double> >& p)->Vector3D
-   {
-      return Vector3D
-         (
-            std::sin(std::get<theta_<double>>(p).value())*std::cos(std::get<phi_<double> >(p).value()),
-            std::sin(std::get<theta_<double>>(p).value())*std::sin(std::get<phi_<double> >(p).value()),
-            std::cos(std::get<theta_<double>>(p).value())
-         ); 
-   };
+   //const auto S2R = [](const std::tuple<theta_<double>,phi_<double> >& p)->Vector3D
+   //{
+   //   return Vector3D
+   //      (
+   //         std::sin(std::get<theta_<double>>(p).value())*std::cos(std::get<phi_<double> >(p).value()),
+   //         std::sin(std::get<theta_<double>>(p).value())*std::sin(std::get<phi_<double> >(p).value()),
+   //         std::cos(std::get<theta_<double>>(p).value())
+   //      ); 
+   //};
 
    const auto LJ = [](const double& distance)->double
    {
@@ -127,4 +139,34 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
    }
    
    return random_points; 
+}
+
+std::vector<std::array<size_t, 6> > generate_network
+(
+   const std::vector<std::tuple<theta_<double>,phi_<double> > >& ps
+)
+{
+   std::vector<std::array<size_t, 6> > res(ps.size(),std::array<size_t,6>());
+   for(size_t i=0,size=ps.size();i<size;++i)
+   {
+      std::vector<std::tuple<size_t,double> > rank;
+      for(size_t nbr=0;nbr<size;++nbr)
+      {
+         if(i!=nbr)
+         {
+            rank.push_back(std::tuple<size_t,double>
+               (
+                  nbr,
+                  (S2R(ps.at(i))-S2R(ps.at(nbr))).norm()
+               )
+            );
+         }
+      }
+      std::sort(rank.begin(),rank.end(),[](const auto& a, const auto& b){return std::get<double>(a)<std::get<double>(b);});
+      for(size_t s=0;s<6;++s)
+      {
+         res.at(i).at(s)=std::get<size_t>(rank.at(s));
+      }
+   }
+   return res;
 }
