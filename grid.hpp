@@ -3,10 +3,39 @@
 
 std::mt19937_64 mt_grid(265278465287);
 
+#define PATH_TO_GRID_POINTS_SOURCE "GRID_POINTS_SOURCE"
+
 std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi()
 {
-   std::vector< std::tuple<theta_<double>,phi_<double> > > random_points(N_grid_points);
+   {//load it
+      std::vector< std::tuple<theta_<double>,phi_<double> > > loaded_random_points;
+      try
+      {
+         Getline gl(PATH_TO_GRID_POINTS_SOURCE);
+         std::string tmp;
+         while(gl.is_open())
+         {
+            tmp=gl.get();
+            std::vector<std::string> vs;
+            boost::algorithm::split(vs,tmp,boost::is_any_of(" "));
+            loaded_random_points.push_back
+               (
+                  {
+                     theta_<double>(boost::lexical_cast<double> (vs.at(0))),
+                     phi_<double>(  boost::lexical_cast<double> (vs.at(1)))
+                  }
+               );
+         }
+      }catch(...)
+      {
+      }
+      if(loaded_random_points.size()==N_grid_points)
+      {
+         return loaded_random_points;
+      }
+   }
 
+   std::vector< std::tuple<theta_<double>,phi_<double> > > random_points(N_grid_points);
    std::uniform_real_distribution<double> dist_theta(0.0,  M_PI);
    std::uniform_real_distribution<double> dist_phi(  0.0,2*M_PI);
    for(int i=0;i<N_grid_points;++i)
@@ -90,5 +119,12 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
       }
       //std::cout<<s<<" "<<E_current<<std::endl;
    }
+   std::ofstream ofs(PATH_TO_GRID_POINTS_SOURCE,std::ios::trunc);
+   boost::format fmt("%1.15e %1.15e\n");
+   for(auto p : random_points)
+   {
+      ofs<<fmt %(std::get<theta_<double> >(p).value()) %(std::get<phi_<double> >(p).value());
+   }
+   
    return random_points; 
 }
