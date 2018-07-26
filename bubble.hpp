@@ -9,6 +9,7 @@
 #include "Chaperone/constexpr_math.hpp"
 #include "Chaperone/NamedParameter.hpp"
 #include "Chaperone/Vector3D.hpp"
+#include "ReadFile.hpp"
 
 NP_MAKE_NAMED_PARAMETER(theta);//[0:pi]
 NP_MAKE_NAMED_PARAMETER(phi);  //[0:2pi)
@@ -24,7 +25,7 @@ bool operator<(k_<int> a,k_<int> b)
    return a.value()<b.value();
 }
 
-std::vector<std::tuple<theta_<double>,phi_<double> > > grid_points;
+std::vector<std::tuple<theta_<double>,phi_<double> > > grid_points = generate_random_theta_phi();
 std::map<k_<int>,std::array<k_<int>, 6> > network;
 
 class Quadratic_function
