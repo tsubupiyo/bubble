@@ -107,6 +107,10 @@ namespace np
       {
          return m_value;
       }
+      constexpr Type& value()
+      {
+         return m_value;
+      }
    };
 
    template <class Tag, class Type>

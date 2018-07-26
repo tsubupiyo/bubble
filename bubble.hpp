@@ -6,21 +6,24 @@
 #include <set>
 #include <map>
 #include <array>
-#include "NamedParameter.hpp"
-#include "Vector3D.hpp"
+#include "Chaperone/constexpr_math.hpp"
+#include "Chaperone/NamedParameter.hpp"
+#include "Chaperone/Vector3D.hpp"
 
-NP_MAKE_NAMED_PARAMETER(theta);//[-0.5pi:0.5pi]
+NP_MAKE_NAMED_PARAMETER(theta);//[0:pi]
 NP_MAKE_NAMED_PARAMETER(phi);  //[0:2pi)
 NP_MAKE_NAMED_PARAMETER(u);//amplitude
 NP_MAKE_NAMED_PARAMETER(k);//index of element of P
 NP_MAKE_NAMED_PARAMETER(d);//distance between two points
+
+constexpr int N_grid_points= 100;
+#include "grid.hpp"
 
 bool operator<(k_<int> a,k_<int> b)
 {
    return a.value()<b.value();
 }
 
-constexpr int N_grid_points= 100;
 std::vector<std::tuple<theta_<double>,phi_<double> > > grid_points;
 std::map<k_<int>,std::array<k_<int>, 6> > network;
 
