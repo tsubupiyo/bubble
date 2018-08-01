@@ -12,6 +12,15 @@ int main()
    {
       std::cout<<std::get<theta_<double> >(p).value()<<" "<<std::get<phi_<double> >(p).value()<<std::endl;
    }
+   for(size_t i=0,i_size=network.size();i<i_size;++i)
+   {
+      std::cout<<i<<": ";
+      for(auto ni : network.at(i))
+      {
+         std::cout<<ni<<" ";
+      }
+      std::cout<<std::endl;
+   }
    //std::mt19937_64 mt(SEED); 
    //const std::vector<Vector3D> ps=[&mt]()
    //{

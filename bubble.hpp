@@ -26,7 +26,7 @@ bool operator<(k_<int> a,k_<int> b)
 }
 
 std::vector<std::tuple<theta_<double>,phi_<double> > > grid_points = generate_random_theta_phi();
-std::map<k_<int>,std::array<k_<int>, 6> > network;
+std::vector<std::array<size_t, 6> > network = generate_network(grid_points);
 
 class Quadratic_function
 {  //y = a*x*x + b*x + c
