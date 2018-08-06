@@ -34,8 +34,13 @@ class Quadratic_function
       double a;
       double b;
       double c;
-   Quadratic_function(double a_, double b_, double c_);
-   d_<double> get(std::tuple<u_<double>,d_<double> > point)const;
+      Quadratic_function(double a_, double b_, double c_);
+      void add(std::tuple<u_<double>,d_<double> > pnt);
+      std::tuple<double,double,double> get_parameter()const; 
+   private:
+      void LM();
+      std::vector<std::tuple<u_<double>,d_<double> > > points;
+      bool f_useable;
 };
 
 class Voronoi_cell
@@ -67,6 +72,22 @@ class Voronoi_diagram
    void change_pointer(std::vector<Vector3D> const * ps);
 };
 
+Quadratic_function::Quadratic_function(double a_, double b_, double c_):a(a_),b(b_),c(c_)
+{
+   f_useable=false;
+}
+
+void Quadratic_function::add(std::tuple<u_<double>,d_<double> > pnt)
+{
+   points.push_back(pnt);
+}
+
+std::tuple<double,double,double> Quadratic_function::get_parameter()const
+{
+   assert(f_useable);
+   return {a,b,c};
+}
+
 std::set<k_<int> > Voronoi_cell::get_neighbor()const
 {//return indexes of neighboring voronoi cells (K)
    return K;
@@ -81,8 +102,6 @@ void Voronoi_diagram::generate()
    } 
    return ;
 }
-
-Quadratic_function::Quadratic_function(double a_, double b_, double c_):a(a_),b(b_),c(c_){}
 
 Voronoi_cell::Voronoi_cell(const k_<int> i, std::vector<Vector3D> const * ps)
 {
