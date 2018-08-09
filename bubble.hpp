@@ -43,6 +43,8 @@ class Quadratic_function
       bool f_useable;
 };
 
+double solve(const std::tuple<double,double,double>& beta_1, const std::tuple<double,double,double>& beta_2, const double x_init=0.0);
+
 class Voronoi_cell
 {
    public:
@@ -148,3 +150,44 @@ void Voronoi_diagram::change_pointer(std::vector<Vector3D> const * ps)
    std::for_each(R.begin(),R.end(),[this](auto& r){r.change_pointer(P);});
 }
 
+double solve
+(
+   const std::tuple<double,double,double>& beta_1, 
+   const std::tuple<double,double,double>& beta_2, 
+   const double x_init
+)
+{//Newton's method
+   const double A = std::get<0>(beta_1)-std::get<0>(beta_2);
+   const double B = std::get<1>(beta_1)-std::get<1>(beta_2);
+   const double C = std::get<2>(beta_1)-std::get<2>(beta_2);
+   const double A2 = std::pow(A,2);
+   const double B2 = std::pow(B,2);
+   const double C2 = std::pow(C,2);
+   const double AB = A*B;
+   const double BC = B*C;
+   const double AC = A*C;
+   const auto f = [&](const double x1)->std::tuple<double,double>
+   {
+      const double x2 = x1*x1;
+      const double x3 = x1*x2;
+      const double x4 = x1*x3;
+      return 
+      {
+         A2*x4 + 2*AB*x3 + 2*AC*x2 + B2*x2 + 2*BC*x1           + C2,  //f(x)
+                 4*A2*x3 + 6*AB*x2         + 4*AC*x1 + 2*B2*x1 + 2*BC //f'(x)
+      };
+   };
+
+   double x   = x_init;
+   double xp1 = x_init;
+   std::tuple<double,double> ff;
+   constexpr double EPS_NEWTON = 0.000001;
+   do
+   {
+      x   = xp1;
+      ff  = f(x);
+      xp1 = x - std::get<0>(ff)/std::get<1>(ff);
+   }while(std::abs((xp1+x)/x)>EPS_NEWTON);
+
+   return x;
+}
