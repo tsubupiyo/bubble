@@ -9,6 +9,7 @@
 #include "Chaperone/constexpr_math.hpp"
 #include "Chaperone/NamedParameter.hpp"
 #include "Chaperone/Vector3D.hpp"
+#include "Levenberg-Marquardt/LevMar.hpp"
 #include "ReadFile.hpp"
 
 NP_MAKE_NAMED_PARAMETER(theta);//[0:pi]
@@ -31,15 +32,14 @@ std::vector<std::array<size_t, 6> > network = generate_network(grid_points);
 class Quadratic_function
 {  //y = a*x*x + b*x + c
    public:
-      double a;
-      double b;
-      double c;
+      std::tuple<double,double,double> beta;//a,b,c
       Quadratic_function(double a_, double b_, double c_);
       void add(std::tuple<u_<double>,d_<double> > pnt);
       std::tuple<double,double,double> get_parameter()const; 
    private:
       void LM();
-      std::vector<std::tuple<u_<double>,d_<double> > > points;
+      std::vector<double> ys;
+      std::vector<double> xs;
       bool f_useable;
 };
 
@@ -72,20 +72,27 @@ class Voronoi_diagram
    void change_pointer(std::vector<Vector3D> const * ps);
 };
 
-Quadratic_function::Quadratic_function(double a_, double b_, double c_):a(a_),b(b_),c(c_)
+Quadratic_function::Quadratic_function(double a_, double b_, double c_)
 {
+   beta={a_,b_,c_};
    f_useable=false;
 }
 
 void Quadratic_function::add(std::tuple<u_<double>,d_<double> > pnt)
 {
-   points.push_back(pnt);
+   xs.push_back(std::get<u_<double>>(pnt).value());
+   ys.push_back(std::get<d_<double>>(pnt).value());
 }
 
 std::tuple<double,double,double> Quadratic_function::get_parameter()const
 {
    assert(f_useable);
-   return {a,b,c};
+   return beta;
+}
+
+void Quadratic_function::LM()
+{
+   beta = LevMar(xs,ys, beta); 
 }
 
 std::set<k_<int> > Voronoi_cell::get_neighbor()const
