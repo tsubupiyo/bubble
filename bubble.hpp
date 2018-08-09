@@ -138,6 +138,35 @@ double Voronoi_cell::get_volume()const
    return sum*V0;
 }
 
+void Voronoi_cell::boundary_fitting()
+{
+   //1. find nearest neighbor
+   const auto [min_dist,min_k] = [this]()->std::tuple<double,double>
+   {
+      const auto& ps = *P;
+      double min = DBL_MAX;
+      int min_k_ = k.value();
+      const Vector3D& center = ps.at(k.value());
+      for(size_t i=0,size=ps.size();i<size;++i)
+      {
+         if(i!=k.value())
+         {
+            const Vector3D& pnt = ps.at(i);
+            const double dis = (pnt-center).norm();
+            if(dis<min){min=dis;min_k_=i;}
+         }
+      }
+      return {min,min_k_};
+   }();
+   //2. search nearest grid point
+   const auto size_t grid_point_init = []()->size_t
+   {
+      const auto& ps = *P;
+      const Vector3D direction = (ps.at(min_k)-ps.at(k.value()));
+   }();
+   //3. fitting using filling algorithm
+}
+
 Voronoi_diagram::Voronoi_diagram(std::vector<Vector3D>* const ps)
 {
    P=ps;
@@ -156,7 +185,7 @@ double solve
    const std::tuple<double,double,double>& beta_2, 
    const double x_init
 )
-{//Newton's method
+{//Newton's method + damping
    const double A = std::get<0>(beta_1)-std::get<0>(beta_2);
    const double B = std::get<1>(beta_1)-std::get<1>(beta_2);
    const double C = std::get<2>(beta_1)-std::get<2>(beta_2);
@@ -166,6 +195,7 @@ double solve
    const double AB = A*B;
    const double BC = B*C;
    const double AC = A*C;
+
    const auto f = [&](const double x1)->std::tuple<double,double>
    {
       const double x2 = x1*x1;
@@ -181,13 +211,19 @@ double solve
    double x   = x_init;
    double xp1 = x_init;
    std::tuple<double,double> ff;
-   constexpr double EPS_NEWTON = 0.000001;
+   constexpr double EPS_NEWTON      = 0.000001;
+   constexpr double LMD_NEWTON      = 0.1;
+   constexpr int NEWTON_COUNT_LIMIT = 100;
+   int count=0;
+
    do
    {
       x   = xp1;
       ff  = f(x);
-      xp1 = x - std::get<0>(ff)/std::get<1>(ff);
-   }while(std::abs((xp1+x)/x)>EPS_NEWTON);
+      xp1 = x - std::get<0>(ff) / (std::get<1>(ff) * (1 + LMD_NEWTON));
+      if(++count > NEWTON_COUNT_LIMIT){break;}
+   }while( std::abs( (xp1 + x) / x) > EPS_NEWTON);
 
    return x;
 }
+
