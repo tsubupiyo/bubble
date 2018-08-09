@@ -124,6 +124,18 @@ void Voronoi_cell::change_pointer(std::vector<Vector3D> const * ps)
    P=ps;
 }
 
+double Voronoi_cell::get_volume()const
+{
+   constexpr int N = N_grid_points;
+   constexpr double V0 = (4.0*M_PI/(3*N))*cexpr_math::sqrt(1.0-4.0/N);
+   double sum=0.0;
+   for(size_t i=0,size=u.size();i<size;++i)
+   {
+      sum+=u.at(i).value();
+   }
+   return sum*V0;
+}
+
 Voronoi_diagram::Voronoi_diagram(std::vector<Vector3D>* const ps)
 {
    P=ps;
