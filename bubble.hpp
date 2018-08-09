@@ -82,6 +82,7 @@ void Quadratic_function::add(std::tuple<u_<double>,d_<double> > pnt)
 {
    xs.push_back(std::get<u_<double>>(pnt).value());
    ys.push_back(std::get<d_<double>>(pnt).value());
+   f_useable=false;
 }
 
 std::tuple<double,double,double> Quadratic_function::get_parameter()const
@@ -92,7 +93,9 @@ std::tuple<double,double,double> Quadratic_function::get_parameter()const
 
 void Quadratic_function::LM()
 {
+   if(xs.size()<5)return ;
    beta = LevMar(xs,ys, beta); 
+   f_useable=true;
 }
 
 std::set<k_<int> > Voronoi_cell::get_neighbor()const
