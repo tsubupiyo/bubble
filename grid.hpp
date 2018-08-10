@@ -50,7 +50,7 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
    std::vector< std::tuple<theta_<double>,phi_<double> > > random_points(N_grid_points);
    std::uniform_real_distribution<double> dist_theta(0.0,  M_PI);
    std::uniform_real_distribution<double> dist_phi(  0.0,2*M_PI);
-   for(int i=0;i<N_grid_points;++i)
+   for(size_t i=0;i<N_grid_points;++i)
    {
       std::get<theta_<double> >(random_points.at(i)).value() = dist_theta(mt_grid);
       std::get<phi_<double>   >(random_points.at(i)).value() = dist_phi(mt_grid);

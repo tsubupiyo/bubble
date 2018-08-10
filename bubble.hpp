@@ -18,10 +18,10 @@ NP_MAKE_NAMED_PARAMETER(u);//amplitude
 NP_MAKE_NAMED_PARAMETER(k);//index of element of P
 NP_MAKE_NAMED_PARAMETER(d);//distance between two points
 
-constexpr int N_grid_points= 100;
+constexpr size_t N_grid_points= 100;
 #include "grid.hpp"
 
-bool operator<(k_<int> a,k_<int> b)
+bool operator<(k_<size_t> a,k_<size_t> b)
 {
    return a.value()<b.value();
 }
@@ -48,15 +48,15 @@ double solve(const std::tuple<double,double,double>& beta_1, const std::tuple<do
 class Voronoi_cell
 {
    public:
-   k_<int> k;
+   k_<size_t> k;
    std::vector<Vector3D> const * P; //pointer of P (ps)
    private:
    std::vector< u_<double> > u; //amplitude(theta,phi)
-   std::set<k_<int> >        K; //indexies of neighboring subset P in X
+   std::set<k_<size_t> >        K; //indexies of neighboring subset P in X
    public: 
-   Voronoi_cell(const k_<int> i, std::vector<Vector3D> const * ps);
+   Voronoi_cell(const k_<size_t> i, std::vector<Vector3D> const * ps);
    double get_volume()const;
-   std::set<k_<int> > get_neighbor()const; //return indexes of neighboring voronoi cells (K)
+   std::set<k_<size_t> > get_neighbor()const; //return indexes of neighboring voronoi cells (K)
    void change_pointer(std::vector<Vector3D> const * ps);
    private:
    void boundary_fitting();//to determine the cell, fit u to the boundary.
@@ -70,7 +70,7 @@ class Voronoi_diagram
    public:
    Voronoi_diagram(std::vector<Vector3D>* const ps);
    void generate(); //for all voronoi cells
-   std::vector<Voronoi_cell> get_vertual_cells(k_<int> k, const Vector3D& p)const;//for MC
+   std::vector<Voronoi_cell> get_vertual_cells(k_<size_t> k, const Vector3D& p)const;//for MC
    void change_pointer(std::vector<Vector3D> const * ps);
 };
 
@@ -100,7 +100,7 @@ void Quadratic_function::LM()
    f_useable=true;
 }
 
-std::set<k_<int> > Voronoi_cell::get_neighbor()const
+std::set<k_<size_t> > Voronoi_cell::get_neighbor()const
 {//return indexes of neighboring voronoi cells (K)
    return K;
 }
@@ -110,12 +110,12 @@ void Voronoi_diagram::generate()
    R.reserve(P->size());
    for(size_t s=0, size=P->size(); s<size; ++s)
    {
-      R.push_back(Voronoi_cell(k_<int>(static_cast<int>(s)), P));
+      R.push_back(Voronoi_cell(k_<size_t>(s), P));
    } 
    return ;
 }
 
-Voronoi_cell::Voronoi_cell(const k_<int> i, std::vector<Vector3D> const * ps)
+Voronoi_cell::Voronoi_cell(const k_<size_t> i, std::vector<Vector3D> const * ps)
 {
    k=i;
    change_pointer(ps);
@@ -128,7 +128,7 @@ void Voronoi_cell::change_pointer(std::vector<Vector3D> const * ps)
 
 double Voronoi_cell::get_volume()const
 {
-   constexpr int N = N_grid_points;
+   constexpr size_t N = N_grid_points;
    constexpr double V0 = (4.0*M_PI/(3*N))*cexpr_math::sqrt(1.0-4.0/N);
    double sum=0.0;
    for(size_t i=0,size=u.size();i<size;++i)
@@ -141,11 +141,11 @@ double Voronoi_cell::get_volume()const
 void Voronoi_cell::boundary_fitting()
 {
    //1. find nearest neighbor
-   const auto [min_dist,min_k] = [this]()->std::tuple<double,double>
+   const auto [min_dist,min_k] = [this]()->std::tuple<double,k_<size_t> >
    {
       const auto& ps = *P;
       double min = DBL_MAX;
-      int min_k_ = k.value();
+      k_<size_t> min_k_ = k;
       const Vector3D& center = ps.at(k.value());
       for(size_t i=0,size=ps.size();i<size;++i)
       {
@@ -153,18 +153,53 @@ void Voronoi_cell::boundary_fitting()
          {
             const Vector3D& pnt = ps.at(i);
             const double dis = (pnt-center).norm();
-            if(dis<min){min=dis;min_k_=i;}
+            if(dis<min){min=dis;min_k_.value()=i;}
          }
       }
       return {min,min_k_};
    }();
    //2. search nearest grid point
-   const auto size_t grid_point_init = []()->size_t
+   const auto grid_point_init = [min_k=min_k,this]()->size_t
    {
       const auto& ps = *P;
-      const Vector3D direction = (ps.at(min_k)-ps.at(k.value()));
+      Vector3D direction = (ps.at(min_k)-ps.at(k.value()));
+      direction.normalize();
+      const auto tp2v = [](const std::tuple<theta_<double>,phi_<double> >& tp)->Vector3D
+      {
+         const auto theta = (std::get<0>(tp)).value();
+         const auto phi   = (std::get<1>(tp)).value();
+         return {std::sin(theta)*std::cos(phi),std::sin(theta)*std::sin(phi),std::cos(theta)};
+      };
+      const auto dist = [&direction,&tp2v]
+      (
+         const std::tuple<theta_<double>,phi_<double> >& a
+      )->double
+      {
+         return ((tp2v(a)-direction).norm());
+      };
+      double min = DBL_MAX;
+      size_t min_index = 0;
+      for(size_t i=0,size=grid_points.size();i<size;++i)
+      {
+         const double distance = dist(grid_points.at(i));
+         if(min>distance)
+         {
+            min=distance;
+            min_index=i;
+         }
+      }
+      return min_index;
    }();
-   //3. fitting using filling algorithm
+   const auto u_min = [this]
+   (
+      const k_<size_t>& neighbor,
+      const double      distance
+   )->u_<double>
+   {
+       
+   }();
+   ////3. fitting using filling algorithm
+
 }
 
 Voronoi_diagram::Voronoi_diagram(std::vector<Vector3D>* const ps)
