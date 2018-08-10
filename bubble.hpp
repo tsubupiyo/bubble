@@ -20,6 +20,7 @@ NP_MAKE_NAMED_PARAMETER(d);//distance between two points
 
 constexpr size_t N_grid_points= 100;
 #include "grid.hpp"
+constexpr size_t N_SAMPLING_CURVE = 10;
 
 bool operator<(k_<size_t> a,k_<size_t> b)
 {
@@ -34,6 +35,7 @@ class Quadratic_function
    public:
       std::tuple<double,double,double> beta;//a,b,c
       Quadratic_function(double a_, double b_, double c_);
+      Quadratic_function(size_t index_grid_point, Vector3D base, const Vector3D& neighbor);
       void add(std::tuple<u_<double>,d_<double> > pnt);
       std::tuple<double,double,double> get_parameter()const; 
    private:
@@ -78,6 +80,35 @@ Quadratic_function::Quadratic_function(double a_, double b_, double c_)
 {
    beta={a_,b_,c_};
    f_useable=false;
+}
+
+Quadratic_function::Quadratic_function(size_t index_grid_point, Vector3D base, const Vector3D& neighbor)
+{
+   const auto& gp = grid_points.at(index_grid_point);
+   const double& gp_theta = (std::get<theta_<double> >(gp)).value();
+   const double& gp_phi   = (std::get<phi_<double>   >(gp)).value();
+   //1. get direction vector
+   const double sin_thteta = std::sin(gp_theta);
+   const double sin_phi    = std::sin(gp_phi  );
+   const double cos_thteta = std::cos(gp_theta);
+   const double cos_phi    = std::cos(gp_phi  );
+   const Vector3D direction
+      (
+         sin_thteta*cos_phi,
+         sin_thteta*sin_phi,
+         cos_thteta
+      );
+   //2. sampling distance with constant +u (= unit length)
+   xs.resize(N_SAMPLING_CURVE);
+   ys.resize(N_SAMPLING_CURVE);
+   for(size_t s=0;s<N_SAMPLING_CURVE;++s)
+   {
+      base+=direction;
+      xs.at(s)=static_cast<int>(s);
+      ys.at(s)=(base-neighbor).norm();
+   }
+   //3. get beta
+   LM();
 }
 
 void Quadratic_function::add(std::tuple<u_<double>,d_<double> > pnt)
@@ -162,7 +193,7 @@ void Voronoi_cell::boundary_fitting()
    const auto grid_point_init = [min_k=min_k,this]()->size_t
    {
       const auto& ps = *P;
-      Vector3D direction = (ps.at(min_k)-ps.at(k.value()));
+      Vector3D direction = (ps.at(min_k.value())-ps.at(k.value()));
       direction.normalize();
       const auto tp2v = [](const std::tuple<theta_<double>,phi_<double> >& tp)->Vector3D
       {
@@ -189,14 +220,6 @@ void Voronoi_cell::boundary_fitting()
          }
       }
       return min_index;
-   }();
-   const auto u_min = [this]
-   (
-      const k_<size_t>& neighbor,
-      const double      distance
-   )->u_<double>
-   {
-       
    }();
    ////3. fitting using filling algorithm
 
