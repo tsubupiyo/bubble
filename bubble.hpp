@@ -62,6 +62,7 @@ class Voronoi_cell
    void change_pointer(std::vector<Vector3D> const * ps);
    private:
    void boundary_fitting();//to determine the cell, fit u to the boundary.
+   void solve_u_stack(const size_t pos_origin);
 };
 
 class Voronoi_diagram
@@ -222,6 +223,8 @@ void Voronoi_cell::boundary_fitting()
       return min_index;
    }();
    ////3. fitting using filling algorithm
+   //void solve_u_stack(const size_t pos);
+   //TODO::u の初期化を行ってそれの値にフラグの意味をもたせてsolve_u_stackで利用する
 
 }
 
@@ -285,3 +288,50 @@ double solve
    return x;
 }
 
+[[deprecated]]
+void fill_it_stack
+(
+   std::vector<std::vector<std::vector<Color> > >&array,
+   const int& x0, const int& y0, const int& z0
+)
+{
+   const int maxx = array.size();
+   const int maxy = array[0].size();
+   const int maxz = array[0][0].size();
+
+   typedef std::tuple<int,int,int> ref ;
+   std::stack<ref> refs;
+   refs.push(ref(x0,y0,z0));
+   while(!refs.empty())
+   {
+      const ref& top = refs.top();
+      const int& x = std::get<0>(top);
+      const int& y = std::get<1>(top);
+      const int& z = std::get<2>(top);
+      Color& topc = array[std::get<0>(top)][std::get<1>(top)][std::get<2>(top)];
+      if(topc==UNKNOWN)
+      {
+         topc=PAST;
+         if(((x+1)<maxx)&&array[x+1][y][z]==UNKNOWN){ refs.push(ref(x+1,y,z)); }
+         if(((y+1)<maxy)&&array[x][y+1][z]==UNKNOWN){ refs.push(ref(x,y+1,z)); }
+         if(((z+1)<maxz)&&array[x][y][z+1]==UNKNOWN){ refs.push(ref(x,y,z+1)); }
+         if(((x-1)>=0)  &&array[x-1][y][z]==UNKNOWN){ refs.push(ref(x-1,y,z)); }
+         if(((y-1)>=0)  &&array[x][y-1][z]==UNKNOWN){ refs.push(ref(x,y-1,z)); }
+         if(((z-1)>=0)  &&array[x][y][z-1]==UNKNOWN){ refs.push(ref(x,y,z-1)); }
+      }
+      refs.pop();
+   }
+}
+
+void Voronoi_cell::solve_u_stack(const size_t pos_origin)
+{
+   #warning //TODO::書きかけ
+   //std::vector< u_<double> > u; //amplitude(theta,phi)
+   std::stack<std::tuple<size_t,size_t> > stack_target_and_ref;
+   stack_gp_idx.push(pos);
+   while(!stack_gp_idx.empty())
+   {
+      const size_t& top = stack_gp_idx.top();
+   }
+
+}
