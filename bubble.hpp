@@ -349,8 +349,9 @@ void Voronoi_cell::solve_u_stack
    const u_<double> u0(DBL_MAX);
    std::fill(u.begin(),u.end(),u0);
    const std::vector<Vector3D>& ps = *P;
-   qfs.at(k.value()   ).set(idx_grid_point_init,ps.at(k.value()),k.value()   );
-   qfs.at(idx_neighbor).set(idx_grid_point_init,ps.at(k.value()),idx_neighbor);
+   const Vector3D& base = ps.at(k.value());
+   qfs.at(k.value()   ).set(idx_grid_point_init,base,k.value()   );
+   qfs.at(idx_neighbor).set(idx_grid_point_init,base,idx_neighbor);
    u.at(idx_grid_point_init)=solve(qfs.at(k.value()).get_parameter(),qfs.at(idx_neighbor).get_parameter());
    std::stack<std::tuple<size_t,size_t> > stack;//次計算するgpと、そのとき参照するgp
    for(size_t i=0;i<N_NEIGHBOR;++i)
@@ -359,6 +360,31 @@ void Voronoi_cell::solve_u_stack
    }
    while(!stack.empty())
    {
-      //TODO::
+      //1. pop
+      const auto [pos,ref] = stack.pop();
+      if(DBL_MAX!=u.at(pos).value()){continue;}
+      //2. init qfs
+      for(size_t i=0;i<N_grid_points;++i)
+      {
+         qfs.set(pos,base,ps.at(i));
+      }
+      //3. find min_arg(solve(i,j))
+      double min(DBL_MAX);
+      size_t min_idx;
+      for(size_t i=0;i<N_grid_points;++i)
+      {
+        if(k.value()!=i) 
+        {
+           //solve
+           u_res = solve(qfs.at(k.value()),qfs.at(i));
+           if(u_res<min)
+           {
+              min     = u_res;
+              min_idx = i;
+           }
+        }
+      }
+      u.at(pos)=min;
+      //TODO::push with min_idx
    }
 }
