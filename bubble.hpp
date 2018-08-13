@@ -11,6 +11,7 @@
 #include "Chaperone/Vector3D.hpp"
 #include "Levenberg-Marquardt/LevMar.hpp"
 #include "ReadFile.hpp"
+#include <stack>
 
 NP_MAKE_NAMED_PARAMETER(theta);//[0:pi]
 NP_MAKE_NAMED_PARAMETER(phi);  //[0:2pi)
@@ -21,6 +22,7 @@ NP_MAKE_NAMED_PARAMETER(d);//distance between two points
 constexpr size_t N_grid_points= 100;
 #include "grid.hpp"
 constexpr size_t N_SAMPLING_CURVE = 10;
+constexpr size_t N_NEIGHBOR = 6;
 
 bool operator<(k_<size_t> a,k_<size_t> b)
 {
@@ -28,14 +30,15 @@ bool operator<(k_<size_t> a,k_<size_t> b)
 }
 
 std::vector<std::tuple<theta_<double>,phi_<double> > > grid_points = generate_random_theta_phi();
-std::vector<std::array<size_t, 6> > network = generate_network(grid_points);
+std::vector<std::array<size_t, N_NEIGHBOR> > network = generate_network(grid_points);
 
 class Quadratic_function
 {  //y = a*x*x + b*x + c
    public:
       std::tuple<double,double,double> beta;//a,b,c
+      Quadratic_function();
       Quadratic_function(double a_, double b_, double c_);
-      Quadratic_function(size_t index_grid_point, Vector3D base, const Vector3D& neighbor);
+      void set(size_t index_grid_point, Vector3D base, const Vector3D& neighbor);
       void add(std::tuple<u_<double>,d_<double> > pnt);
       std::tuple<double,double,double> get_parameter()const; 
    private:
@@ -63,6 +66,7 @@ class Voronoi_cell
    private:
    void boundary_fitting();//to determine the cell, fit u to the boundary.
    void solve_u_stack(const size_t pos_origin);
+   std::vector<Quadratic_function> qfs;
 };
 
 class Voronoi_diagram
@@ -77,13 +81,23 @@ class Voronoi_diagram
    void change_pointer(std::vector<Vector3D> const * ps);
 };
 
+Quadratic_function::Quadratic_function()
+{
+   beta={0.0,0.0,0.0};
+   f_useable=false;
+   xs.reserve(N_SAMPLING_CURVE);
+   ys.reserve(N_SAMPLING_CURVE);
+}
+
 Quadratic_function::Quadratic_function(double a_, double b_, double c_)
 {
    beta={a_,b_,c_};
    f_useable=false;
+   xs.reserve(N_SAMPLING_CURVE);
+   ys.reserve(N_SAMPLING_CURVE);
 }
 
-Quadratic_function::Quadratic_function(size_t index_grid_point, Vector3D base, const Vector3D& neighbor)
+void Quadratic_function::set(size_t index_grid_point, Vector3D base, const Vector3D& neighbor)
 {
    const auto& gp = grid_points.at(index_grid_point);
    const double& gp_theta = (std::get<theta_<double> >(gp)).value();
@@ -151,6 +165,7 @@ Voronoi_cell::Voronoi_cell(const k_<size_t> i, std::vector<Vector3D> const * ps)
 {
    k=i;
    change_pointer(ps);
+   qfs.resize(N_grid_points);
 }
 
 void Voronoi_cell::change_pointer(std::vector<Vector3D> const * ps)
@@ -323,15 +338,27 @@ void fill_it_stack
    }
 }
 
-void Voronoi_cell::solve_u_stack(const size_t pos_origin)
+void Voronoi_cell::solve_u_stack
+(
+   const size_t idx_grid_point_init,
+   const k_<size_t>& idx_neighbor,
+   const d_<double>& min_distance// ||P_k-P_neighbor||
+)
 {
-   #warning //TODO::書きかけ
-   //std::vector< u_<double> > u; //amplitude(theta,phi)
-   std::stack<std::tuple<size_t,size_t> > stack_target_and_ref;
-   stack_gp_idx.push(pos);
-   while(!stack_gp_idx.empty())
+   #warning //まだだよ
+   const u_<double> u0(DBL_MAX);
+   std::fill(u.begin(),u.end(),u0);
+   const std::vector<Vector3D>& ps = *P;
+   qfs.at(k.value()   ).set(idx_grid_point_init,ps.at(k.value()),k.value()   );
+   qfs.at(idx_neighbor).set(idx_grid_point_init,ps.at(k.value()),idx_neighbor);
+   u.at(idx_grid_point_init)=solve(qfs.at(k.value()).get_parameter(),qfs.at(idx_neighbor).get_parameter());
+   std::stack<std::tuple<size_t,size_t> > stack;//次計算するgpと、そのとき参照するgp
+   for(size_t i=0;i<N_NEIGHBOR;++i)
    {
-      const size_t& top = stack_gp_idx.top();
+      stack.push({network.at(idx_grid_point_init),idx_grid_point_init});
    }
-
+   while(!stack.empty())
+   {
+      //TODO::
+   }
 }
