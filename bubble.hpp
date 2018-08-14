@@ -253,6 +253,7 @@ void Voronoi_cell::boundary_fitting()
    }
    std::stack<std::tuple<size_t,size_t> > stack;//target and ref point
    stack.push({idx_grid_point_init,idx_grid_point_init});
+   K.clear();
    while(!stack.empty())
    {
       const auto [top,idx_ref_u] = stack.top();
@@ -268,6 +269,7 @@ void Voronoi_cell::boundary_fitting()
       //find min(positive u)
       const std::tuple<double,double,double>& beta_i = ref_beta.at(top);
       double min(DBL_MAX);//これプラスについてだけに限らないとまずいでしょマイナスしかないときは開空間.この場合はDBL_MAXが残っていいだろう
+      size_t k_neighbor = std::numeric_limits<std::size_t>::max();
       for(size_t j=0;j<N_grid_points;++j)
       {
          if(top==j){continue;}
@@ -275,9 +277,11 @@ void Voronoi_cell::boundary_fitting()
          if((u_result>=0.0) && min>u_result)
          {
             min=u_result;
+            k_neighbor=j;
          }
       }
       u.at(top).value()=min;
+      K.insert(k_<size_t>(k_neighbor));
       for(size_t i=0;i<N_NEIGHBOR;++i)
       {
          stack.push({network.at(top).at(i),top});
