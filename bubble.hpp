@@ -56,8 +56,8 @@ class Voronoi_cell
    k_<size_t> k;
    std::vector<Vector3D> const * P; //pointer of P (ps)
    private:
-   std::vector< u_<double> > u; //amplitude(theta,phi)
-   std::set<k_<size_t> >        K; //indexies of neighboring subset P in X
+   std::vector< u_<double> >     u; //amplitude(theta,phi)
+   std::set<k_<size_t> >         K; //indexies of neighboring subset P in X
    public: 
    Voronoi_cell(const k_<size_t> i, std::vector<Vector3D> const * ps);
    double get_volume()const;
@@ -65,12 +65,6 @@ class Voronoi_cell
    void change_pointer(std::vector<Vector3D> const * ps);
    private:
    void boundary_fitting();//to determine the cell, fit u to the boundary.
-//   void solve_u_stack
-//   (
-//      const size_t idx_grid_point_init,
-////      const k_<size_t>& idx_neighbor,
-//      const d_<double>& min_distance// ||P_k-P_neighbor||
-//   );
    std::vector<Quadratic_function> qfs;
    std::vector<std::tuple<double,double,double> > ref_beta;
 };
@@ -79,7 +73,7 @@ class Voronoi_diagram
 {
    private:
    std::vector<Vector3D> const * P; //point to P in X
-   std::vector<Voronoi_cell> R; //voronoi cells
+   std::vector<Voronoi_cell>     R; //voronoi cells
    public:
    Voronoi_diagram(std::vector<Vector3D>* const ps);
    void generate(); //for all voronoi cells
@@ -105,6 +99,7 @@ Quadratic_function::Quadratic_function(double a_, double b_, double c_)
 
 void Quadratic_function::set(size_t index_grid_point, Vector3D base, const Vector3D& neighbor, const std::tuple<double,double,double>& ref_beta)
 {
+   f_useable=false;
    beta=ref_beta;
    const auto& gp = grid_points.at(index_grid_point);
    const double& gp_theta = (std::get<theta_<double> >(gp)).value();
