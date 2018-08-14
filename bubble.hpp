@@ -281,7 +281,7 @@ void Voronoi_cell::boundary_fitting()
          }
       }
       u.at(top).value()=min;
-      K.insert(k_<size_t>(k_neighbor));
+      if(std::numeric_limits<std::size_t>::max()!=k_neighbor){K.insert(k_<size_t>(k_neighbor))};
       for(size_t i=0;i<N_NEIGHBOR;++i)
       {
          stack.push({network.at(top).at(i),top});
