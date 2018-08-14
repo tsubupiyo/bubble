@@ -38,7 +38,7 @@ class Quadratic_function
       std::tuple<double,double,double> beta;//a,b,c
       Quadratic_function();
       Quadratic_function(double a_, double b_, double c_);
-      void set(size_t index_grid_point, Vector3D base, const Vector3D& neighbor);
+      void set(size_t index_grid_point, Vector3D base, const Vector3D& neighbor, const std::tuple<double,double,double>& ref_beta=std::tuple<double,double,double>(0,0,0));
       void add(std::tuple<u_<double>,d_<double> > pnt);
       std::tuple<double,double,double> get_parameter()const; 
    private:
@@ -65,8 +65,14 @@ class Voronoi_cell
    void change_pointer(std::vector<Vector3D> const * ps);
    private:
    void boundary_fitting();//to determine the cell, fit u to the boundary.
-   void solve_u_stack(const size_t pos_origin);
+//   void solve_u_stack
+//   (
+//      const size_t idx_grid_point_init,
+////      const k_<size_t>& idx_neighbor,
+//      const d_<double>& min_distance// ||P_k-P_neighbor||
+//   );
    std::vector<Quadratic_function> qfs;
+   std::vector<std::tuple<double,double,double> > ref_beta;
 };
 
 class Voronoi_diagram
@@ -97,8 +103,9 @@ Quadratic_function::Quadratic_function(double a_, double b_, double c_)
    ys.reserve(N_SAMPLING_CURVE);
 }
 
-void Quadratic_function::set(size_t index_grid_point, Vector3D base, const Vector3D& neighbor)
+void Quadratic_function::set(size_t index_grid_point, Vector3D base, const Vector3D& neighbor, const std::tuple<double,double,double>& ref_beta)
 {
+   beta=ref_beta;
    const auto& gp = grid_points.at(index_grid_point);
    const double& gp_theta = (std::get<theta_<double> >(gp)).value();
    const double& gp_phi   = (std::get<phi_<double>   >(gp)).value();
@@ -114,8 +121,6 @@ void Quadratic_function::set(size_t index_grid_point, Vector3D base, const Vecto
          cos_thteta
       );
    //2. sampling distance with constant +u (= unit length)
-   xs.resize(N_SAMPLING_CURVE);
-   ys.resize(N_SAMPLING_CURVE);
    for(size_t s=0;s<N_SAMPLING_CURVE;++s)
    {
       base+=direction;
@@ -166,6 +171,7 @@ Voronoi_cell::Voronoi_cell(const k_<size_t> i, std::vector<Vector3D> const * ps)
    k=i;
    change_pointer(ps);
    qfs.resize(N_grid_points);
+   ref_beta.resize(N_grid_points);
 }
 
 void Voronoi_cell::change_pointer(std::vector<Vector3D> const * ps)
@@ -188,7 +194,7 @@ double Voronoi_cell::get_volume()const
 void Voronoi_cell::boundary_fitting()
 {
    //1. find nearest neighbor
-   const auto [min_dist,min_k] = [this]()->std::tuple<double,k_<size_t> >
+   const auto [min_distance,min_k] = [this]()->std::tuple<double,k_<size_t> >
    {
       const auto& ps = *P;
       double min = DBL_MAX;
@@ -206,7 +212,7 @@ void Voronoi_cell::boundary_fitting()
       return {min,min_k_};
    }();
    //2. search nearest grid point
-   const auto grid_point_init = [min_k=min_k,this]()->size_t
+   const auto idx_grid_point_init = [min_k=min_k,this]()->size_t
    {
       const auto& ps = *P;
       Vector3D direction = (ps.at(min_k.value())-ps.at(k.value()));
@@ -238,8 +244,50 @@ void Voronoi_cell::boundary_fitting()
       return min_index;
    }();
    ////3. fitting using filling algorithm
-   //void solve_u_stack(const size_t pos);
-   //TODO::u の初期化を行ってそれの値にフラグの意味をもたせてsolve_u_stackで利用する
+   constexpr u_<double> u0(DBL_MAX);
+   for(size_t i=0;i<N_grid_points;++i)
+   {
+      u.at(i)=u0;
+   }
+   u.at(idx_grid_point_init).value()=0.5*min_distance;
+   const std::vector<Vector3D>& ps = *P;
+   for(size_t i=0;i<N_grid_points;++i)
+   {
+      qfs.at(i).set(i,ps.at(k.value()),ps.at(i));
+      ref_beta.at(i)=qfs.at(i).get_parameter();
+   }
+   std::stack<std::tuple<size_t,size_t> > stack;//target and ref point
+   stack.push({idx_grid_point_init,idx_grid_point_init});
+   while(!stack.empty())
+   {
+      const auto [top,idx_ref_u] = stack.top();
+      if(DBL_MAX!=u.at(top).value()){continue;}
+      for(size_t i=0;i<N_grid_points;++i)//分けた方がメモリ的にいいんじゃないかなぁって みーはおもうのです
+      {
+         qfs.at(i).set(i,ps.at(k.value()),ps.at(i),ref_beta.at(i));
+      }
+      for(size_t i=0;i<N_grid_points;++i)
+      {
+         ref_beta.at(i)=qfs.at(i).get_parameter();
+      }
+      //find min(positive u)
+      const std::tuple<double,double,double>& beta_i = ref_beta.at(top);
+      double min(DBL_MAX);//これプラスについてだけに限らないとまずいでしょマイナスしかないときは開空間.この場合はDBL_MAXが残っていいだろう
+      for(size_t j=0;j<N_grid_points;++j)
+      {
+         if(top==j){continue;}
+         const double u_result = solve(beta_i,ref_beta.at(j),u.at(idx_ref_u).value());
+         if((u_result>=0.0) && min>u_result)
+         {
+            min=u_result;
+         }
+      }
+      u.at(top).value()=min;
+      for(size_t i=0;i<N_NEIGHBOR;++i)
+      {
+         stack.push({network.at(top).at(i),top});
+      }
+   }
 
 }
 
@@ -303,88 +351,3 @@ double solve
    return x;
 }
 
-[[deprecated]]
-void fill_it_stack
-(
-   std::vector<std::vector<std::vector<Color> > >&array,
-   const int& x0, const int& y0, const int& z0
-)
-{
-   const int maxx = array.size();
-   const int maxy = array[0].size();
-   const int maxz = array[0][0].size();
-
-   typedef std::tuple<int,int,int> ref ;
-   std::stack<ref> refs;
-   refs.push(ref(x0,y0,z0));
-   while(!refs.empty())
-   {
-      const ref& top = refs.top();
-      const int& x = std::get<0>(top);
-      const int& y = std::get<1>(top);
-      const int& z = std::get<2>(top);
-      Color& topc = array[std::get<0>(top)][std::get<1>(top)][std::get<2>(top)];
-      if(topc==UNKNOWN)
-      {
-         topc=PAST;
-         if(((x+1)<maxx)&&array[x+1][y][z]==UNKNOWN){ refs.push(ref(x+1,y,z)); }
-         if(((y+1)<maxy)&&array[x][y+1][z]==UNKNOWN){ refs.push(ref(x,y+1,z)); }
-         if(((z+1)<maxz)&&array[x][y][z+1]==UNKNOWN){ refs.push(ref(x,y,z+1)); }
-         if(((x-1)>=0)  &&array[x-1][y][z]==UNKNOWN){ refs.push(ref(x-1,y,z)); }
-         if(((y-1)>=0)  &&array[x][y-1][z]==UNKNOWN){ refs.push(ref(x,y-1,z)); }
-         if(((z-1)>=0)  &&array[x][y][z-1]==UNKNOWN){ refs.push(ref(x,y,z-1)); }
-      }
-      refs.pop();
-   }
-}
-
-void Voronoi_cell::solve_u_stack
-(
-   const size_t idx_grid_point_init,
-   const k_<size_t>& idx_neighbor,
-   const d_<double>& min_distance// ||P_k-P_neighbor||
-)
-{
-   #warning //まだだよ
-   const u_<double> u0(DBL_MAX);
-   std::fill(u.begin(),u.end(),u0);
-   const std::vector<Vector3D>& ps = *P;
-   const Vector3D& base = ps.at(k.value());
-   qfs.at(k.value()   ).set(idx_grid_point_init,base,k.value()   );
-   qfs.at(idx_neighbor).set(idx_grid_point_init,base,idx_neighbor);
-   u.at(idx_grid_point_init)=solve(qfs.at(k.value()).get_parameter(),qfs.at(idx_neighbor).get_parameter());
-   std::stack<std::tuple<size_t,size_t> > stack;//次計算するgpと、そのとき参照するgp
-   for(size_t i=0;i<N_NEIGHBOR;++i)
-   {
-      stack.push({network.at(idx_grid_point_init),idx_grid_point_init});
-   }
-   while(!stack.empty())
-   {
-      //1. pop
-      const auto [pos,ref] = stack.pop();
-      if(DBL_MAX!=u.at(pos).value()){continue;}
-      //2. init qfs
-      for(size_t i=0;i<N_grid_points;++i)
-      {
-         qfs.set(pos,base,ps.at(i));
-      }
-      //3. find min_arg(solve(i,j))
-      double min(DBL_MAX);
-      size_t min_idx;
-      for(size_t i=0;i<N_grid_points;++i)
-      {
-        if(k.value()!=i) 
-        {
-           //solve
-           u_res = solve(qfs.at(k.value()),qfs.at(i));
-           if(u_res<min)
-           {
-              min     = u_res;
-              min_idx = i;
-           }
-        }
-      }
-      u.at(pos)=min;
-      //TODO::push with min_idx
-   }
-}
