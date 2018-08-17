@@ -79,6 +79,8 @@ class Voronoi_diagram
    void generate(); //for all voronoi cells
    std::vector<Voronoi_cell> get_vertual_cells(k_<size_t> k, const Vector3D& p)const;//for MC
    void change_pointer(std::vector<Vector3D> const * ps);
+   std::map<k_<size_t>,std::list<k_<size_t> > > get_Delaunay_diagram()const;
+   std::list<k_<size_t> > get_partial_Delaunay_diagram(const k_<size_t>& center)const;
 };
 
 Quadratic_function::Quadratic_function()
@@ -281,7 +283,7 @@ void Voronoi_cell::boundary_fitting()
          }
       }
       u.at(top).value()=min;
-      if(std::numeric_limits<std::size_t>::max()!=k_neighbor){K.insert(k_<size_t>(k_neighbor))};
+      if(std::numeric_limits<std::size_t>::max()!=k_neighbor){K.insert(k_<size_t>(k_neighbor));};
       for(size_t i=0;i<N_NEIGHBOR;++i)
       {
          stack.push({network.at(top).at(i),top});
@@ -350,3 +352,26 @@ double solve
    return x;
 }
 
+
+std::list<k_<size_t> > Voronoi_diagram::get_partial_Delaunay_diagram(const k_<size_t>& center)const
+{
+   std::list<k_<size_t> > res;
+   const Voronoi_cell& r = R.at(center.value());
+   const std::set<k_<size_t> >& set = r.get_neighbor();
+   for(auto& a: set)
+   {
+      res.push_back(a); 
+   }
+   return res;
+}
+
+std::map<k_<size_t>,std::list<k_<size_t> > > Voronoi_diagram::get_Delaunay_diagram()const
+{
+   std::map<k_<size_t>,std::list<k_<size_t> > > res;
+   for(size_t r=0,size=R.size();r<size;++r)
+   {
+      const k_<size_t> k_(r);
+      res.insert(std::make_pair(k_,get_partial_Delaunay_diagram(k_)));
+   }
+   return res;
+}
