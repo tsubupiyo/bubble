@@ -41,16 +41,16 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
       }catch(...)
       {
       }
-      if(loaded_random_points.size()==N_grid_points)
+      if(loaded_random_points.size()==N_GRID_POINTS)
       {
          return loaded_random_points;
       }
    }
 
-   std::vector< std::tuple<theta_<double>,phi_<double> > > random_points(N_grid_points);
+   std::vector< std::tuple<theta_<double>,phi_<double> > > random_points(N_GRID_POINTS);
    std::uniform_real_distribution<double> dist_theta(0.0,  M_PI);
    std::uniform_real_distribution<double> dist_phi(  0.0,2*M_PI);
-   for(size_t i=0;i<N_grid_points;++i)
+   for(size_t i=0;i<N_GRID_POINTS;++i)
    {
       std::get<theta_<double> >(random_points.at(i)).value() = dist_theta(mt_grid);
       std::get<phi_<double>   >(random_points.at(i)).value() = dist_phi(mt_grid);
@@ -59,7 +59,7 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
    const auto LJ = [](const double& distance)->double
    {
       constexpr double EPS = 1.0;
-      constexpr double sigma = cexpr_math::sqrt(1.0/N_grid_points);
+      constexpr double sigma = cexpr_math::sqrt(1.0/N_GRID_POINTS);
       const double six = std::pow(sigma/distance,6);
       const double twl = std::pow(six,2);
       const auto res = 4.0*EPS*(twl-six);
@@ -83,14 +83,14 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
       return E;
    };
 
-   constexpr int N_STEP    = 10000*N_grid_points;
+   constexpr int N_STEP    = 10000*N_GRID_POINTS;
    constexpr int DOWN_STEP = N_STEP/10;
    double kT = 1000.0;
    double kT_=kT/10;
    double E_current = E_system(false);
    constexpr double DELTA_THETA =   M_PI/100;
    constexpr double DELTA_PHI   = 2*M_PI/100;
-   std::uniform_int_distribution<int>     dist_pos(0,N_grid_points-1);
+   std::uniform_int_distribution<int>     dist_pos(0,N_GRID_POINTS-1);
    std::uniform_real_distribution<double> dist_delta_theta(-DELTA_THETA,+DELTA_THETA);
    std::uniform_real_distribution<double> dist_delta_phi(  -DELTA_PHI,  +DELTA_PHI);
    std::uniform_real_distribution<double> dist_p(0,1.0);
