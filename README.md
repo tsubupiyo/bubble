@@ -1,2 +1,2 @@
 # bubble
-Eccentric voronoi generator
+3-Dimensional Voronoi Diagram Divided by Cones.
