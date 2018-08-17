@@ -365,3 +365,13 @@ std::list<k_<size_t> > Voronoi_diagram::get_partial_Delaunay_diagram(const k_<si
    return res;
 }
 
+std::map<k_<size_t>,std::list<k_<size_t> > > Voronoi_diagram::get_Delaunay_diagram()const
+{
+   std::map<k_<size_t>,std::list<k_<size_t> > > res;
+   for(size_t r=0,size=R.size();r<size;++r)
+   {
+      const k_<size_t> k_(r);
+      res.insert(std::make_pair(k_,get_partial_Delaunay_diagram(k_)));
+   }
+   return res;
+}
