@@ -6,4 +6,4 @@
 ## Starting Point
 Although bubbling is elegant algorithm, the data structure and algorithm are complex and heavy.
 However, contacted bubbles hinted starting point of an algorithm described later.
-![bubbling](doc/fig/Euclidean_Voronoi_diagram.svg)
+![bubbling](doc/fig/Voronoi_growth_euclidean.gif)
