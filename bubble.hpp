@@ -180,7 +180,7 @@ double Voronoi_cell::get_volume()const
 {
    constexpr size_t N = N_GRID_POINTS;
    constexpr double V0 = (4.0*M_PI/(3*N))*cexpr_math::sqrt(1.0-4.0/N);
-   //where V0 is a volume of unit-cone (bottom area is Area_of_unit_sphere/N, length of cone is unit length(1)).
+   //here V0 is a volume of unit-cone (bottom area is Area_of_unit_sphere/N, length of cone is unit length(1)).
    double sum=0.0;
    for(size_t i=0,size=u.size();i<size;++i)
    {
@@ -315,22 +315,13 @@ double solve
    const double A = std::get<0>(beta_1)-std::get<0>(beta_2);
    const double B = std::get<1>(beta_1)-std::get<1>(beta_2);
    const double C = std::get<2>(beta_1)-std::get<2>(beta_2);
-   const double A2 = std::pow(A,2);
-   const double B2 = std::pow(B,2);
-   const double C2 = std::pow(C,2);
-   const double AB = A*B;
-   const double BC = B*C;
-   const double AC = A*C;
 
-   const auto f = [&](const double x1)->std::tuple<double,double>
+   const auto f = [&](const double u)->std::tuple<double,double>
    {
-      const double x2 = x1*x1;
-      const double x3 = x1*x2;
-      const double x4 = x1*x3;
       return 
       {
-         A2*x4 + 2*AB*x3 + 2*AC*x2 + B2*x2 + 2*BC*x1           + C2,  //f(x)
-                 4*A2*x3 + 6*AB*x2         + 4*AC*x1 + 2*B2*x1 + 2*BC //f'(x)
+         A*u*u+B*u+C,//f(u)
+         2*A*u+B//f'(u)
       };
    };
 
