@@ -3,4 +3,7 @@
 # bubble
 3-Dimensional Voronoi Diagram Divided by Cones.
 
-## Definition
+## Starting Point
+Although bubbling is elegant algorithm, the data structure and algorithm are complex and heavy.
+However, contacted bubbles hinted starting point of an algorithm described later.
+![bubbling](doc/fig/Euclidean_Voronoi_diagram.svg)
