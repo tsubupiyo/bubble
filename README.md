@@ -35,7 +35,7 @@ Our algorithm requires a grid to determine the direction of the cone.
 The grid points are distributed almost uniformly on the spherical surface.
 In addition, all of grid points are tethered to create a closed network, in order to speed up the calculation that determines the length of the vector extending from ![Pk](doc/fig/Pk.svg) to the bottom of each cone.
 The grid point are managed as ![theta_phi](doc/fig/theta_phi.svg), which are same with angular coordinates in the spherical coordinate system.
-The length between ![Pk](doc/fig/Pk.svg) and the center of bottom of cone depends ![theta_phi](doc/fig/theta_phi.svg), ![u_func](doc/fig/u_func.svg).
+The length between ![Pk](doc/fig/Pk.svg) and the center of bottom of cone is a function of ![theta_phi](doc/fig/theta_phi.svg), ![u_func](doc/fig/u_func.svg).
 
 ### Tesselation Procedure
 To be detailed.
