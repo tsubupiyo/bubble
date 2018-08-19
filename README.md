@@ -19,22 +19,26 @@ However, contacted bubbles hinted starting point of an algorithm described later
 ![bubbling](doc/fig/Voronoi_growth_euclidean.gif)
 
 
-## Tessellation Algorithm
+## Algorithm
 Our approach accepts a partial reconstruction.
 Maybe a novel approach. 
 Please contact me if you know a similar one.
 
 ### Discretization and Data Structure
 Voronoi cells are represented as a set of cones in our discretization.
-それぞれの円錐の底面の中心はセルの境界に一致する。
-この記述ではギャップや円錐同士のオーバーラップが生じる。
-分割数を増やすほど実際のセルに一致する性質は立方体のvoxel表現した場合と同様である。
-情報の圧縮性は円錐を用いた場合の方が高い。
+The center of the bottom of each cone is adjusts to match the boundary of the cell.
+In the discretization, overlaps and gaps of cones occur.
+The property that the actual cell and the discretized cell coincide with each other as the number of divisions increases is the same as when using a cubic voxel.
+Compressibility of information is higher when using a cone.
 ![bubbling](doc/fig/discretization.jpeg)
-円錐の方向を決めるために、格子を必要とする。
-格子点は球面にほぼ一様に分布する
-また、Pkから伸びるそれぞれの円錐の底面までのベクトルの長さを決める計算の高速化のために、
-これらのすべて格子点は繋留され、閉じた１つのネットワークが作成される。
+Our algorithm requires a grid to determine the direction of the cone.
+The grid points are distributed almost uniformly on the spherical surface.
+In addition, all of grid points are tethered to create a closed network, in order to speed up the calculation that determines the length of the vector extending from ![Pk](fig/Pk.svg) to the bottom of each cone.
+The grid point are managed as ![theta_phi](fig/theta_phi.svg), which are same with angular coordinates in the spherical coordinate system.
+The length between ![Pk](fig/Pk.svg) and the center of bottom of cone depends ![theta_phi](fig/theta_phi.svg), ![u_func](fig/u_func.svg).
+
+### Tesselation Procedure
+To be detailed.
 
 ## Contribution
 1. Fork it ( https://github.com/toyaku-phys/bubble/fork )
