@@ -41,13 +41,23 @@ The length between ![Pk](doc/fig/Pk.svg) and the center of bottom of cone depend
 To be detailed.
 
 ## Contribution
+Pull Request
+
 1. Fork it ( https://github.com/toyaku-phys/bubble/fork )
 2. Create your feature branch (git checkout -b my-new-feature)
 3. Commit your changes (git commit -am 'Add some feature')
 4. Push to the branch (git push origin my-new-feature)
 5. Create a new Pull Request to the bubble/master branch
 
-Or write a Issue
+Issue
+
+1. Write your new feature or bug report
+
+## Submodules
+- [misteltein/Levenberg-Marquardt](https://github.com/misteltein/Levenberg-Marquardt)
+	- [eigenteam/eigen-git-mirror](https://github.com/eigenteam/eigen-git-mirror)
+- [toyaku-phys/Chaperone](https://github.com/toyaku-phys/Chaperone)
+
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning. 
