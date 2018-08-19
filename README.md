@@ -7,14 +7,16 @@
 3-Dimensional Voronoi Diagram Divided by Cones.
 
 ## Definition of Voronoi Diagram
+In a metric space ![X](fig/X.svg), the Voronoi diagram associated with a set of subset ![P](fig/P.svg) is defined as the set of 
+![Rk](fig/Rk.svg).
 
+In our calculation, the distance function is Euclidean.
 
 ## Starting Point
 Although bubbling is the elegant algorithm, the data structure and algorithm are complex and heavy.
 However, contacted bubbles hinted starting point of an algorithm described later.
 
 ![bubbling](doc/fig/Voronoi_growth_euclidean.gif)
-
 
 
 ## Tessellation Algorithm
