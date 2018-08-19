@@ -7,8 +7,8 @@
 3-Dimensional Voronoi Diagram Divided by Cones.
 
 ## Definition of Voronoi Diagram
-In a metric space ![X](fig/X.svg), the Voronoi diagram associated with a set of subset ![P](fig/P.svg) is defined as the set of 
-![Rk](fig/Rk.svg).
+In a metric space ![X](doc/fig/X.svg), the Voronoi diagram associated with a set of subset ![P](doc/fig/P.svg) is defined as the set of 
+![Rk](doc/fig/Rk.svg).
 
 In our calculation, the distance function is Euclidean.
 
@@ -33,9 +33,9 @@ Compressibility of information is higher when using a cone.
 ![bubbling](doc/fig/discretization.jpeg)
 Our algorithm requires a grid to determine the direction of the cone.
 The grid points are distributed almost uniformly on the spherical surface.
-In addition, all of grid points are tethered to create a closed network, in order to speed up the calculation that determines the length of the vector extending from ![Pk](fig/Pk.svg) to the bottom of each cone.
-The grid point are managed as ![theta_phi](fig/theta_phi.svg), which are same with angular coordinates in the spherical coordinate system.
-The length between ![Pk](fig/Pk.svg) and the center of bottom of cone depends ![theta_phi](fig/theta_phi.svg), ![u_func](fig/u_func.svg).
+In addition, all of grid points are tethered to create a closed network, in order to speed up the calculation that determines the length of the vector extending from ![Pk](doc/fig/Pk.svg) to the bottom of each cone.
+The grid point are managed as ![theta_phi](doc/fig/theta_phi.svg), which are same with angular coordinates in the spherical coordinate system.
+The length between ![Pk](doc/fig/Pk.svg) and the center of bottom of cone depends ![theta_phi](doc/fig/theta_phi.svg), ![u_func](doc/fig/u_func.svg).
 
 ### Tesselation Procedure
 To be detailed.
@@ -47,7 +47,7 @@ To be detailed.
 4. Push to the branch (git push origin my-new-feature)
 5. Create a new Pull Request to the bubble/master branch
 
-Or write issue
+Or write a Issue
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning. 
@@ -58,4 +58,4 @@ For the versions available, see the tags on this repository.
 * [**yde**](https://github.com/master-yde) -Discussion partner-
 
 ## License
-MIT-license
+[MIT-license](LICENSE)
