@@ -30,7 +30,9 @@ The center of the bottom of each cone is adjusts to match the boundary of the ce
 In the discretization, overlaps and gaps of cones occur.
 The property that the actual cell and the discretized cell coincide with each other as the number of divisions increases is the same as when using a cubic voxel.
 Compressibility of information is higher when using a cone.
+
 ![bubbling](doc/fig/discretization.jpeg)
+
 Our algorithm requires a grid to determine the direction of the cone.
 The grid points are distributed almost uniformly on the spherical surface.
 In addition, all of grid points are tethered to create a closed network, in order to speed up the calculation that determines the length of the vector extending from ![Pk](doc/fig/Pk.svg) to the bottom of each cone.
@@ -38,7 +40,21 @@ The grid point are managed as ![theta_phi](doc/fig/theta_phi.svg), which are sam
 The length between ![Pk](doc/fig/Pk.svg) and the center of bottom of cone is a function of ![theta_phi](doc/fig/theta_phi.svg), ![u_func](doc/fig/u_func.svg).
 
 ### Tesselation Procedure
-To be detailed.
+#### 1. Find minimum ![uk](doc/fig/uk.svg)
+- The minimum ![uk](doc/fig/uk.svg) is approximately equal to half of the distance to ![Pj](doc/fig/Pj.svg) closest to ![Pj](doc/fig/Pj.svg). Also, the direction ![theta_phi](doc/fig/theta_phi.svg) is direction to ![Pj](doc/fig/Pj.svg).
+
+#### 2. Solve the others uk(theta,phi)
+
+- Reference values for a time-optimization:
+
+	- u(theta', phi') : u for neighbor of (theta,phi)
+	- (beta_1',...,beta_n') : the set of parameter of distance function for each P for (theta',phi') direction
+- Solve
+	- The distance functions (the initial parameter sets is set to(beta_1',...,beta_n') )
+    - The first cross point of the distance functions (the inital cross point is set to u(theta', phi') )
+    - Stack (theta,phi) and stock the parameters of distance function
+    	- Whenever (theta,phi) taken out of the stack, the stocked parameters are corresponding to neighboring (theta,phi).
+    
 
 ## Contribution
 Pull Request
