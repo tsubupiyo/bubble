@@ -7,14 +7,13 @@
 3-Dimensional Voronoi Diagram Divided by Cones.
 
 ## Definition of Voronoi Diagram
-In a metric space ![X](doc/fig/X.svg), the Voronoi diagram associated with a set of subset ![P](doc/fig/P.svg) is defined as the set of 
+In a metric space ![X](doc/fig/X.svg), [the Voronoi diagram](https://en.wikipedia.org/wiki/Voronoi_diagram) associated with a set of subset ![P](doc/fig/P.svg) is defined as the set of 
 ![Rk](doc/fig/Rk.svg).
 
 In our calculation, the distance function is Euclidean.
 
 ## Starting Point
-Although bubbling is the elegant algorithm, the data structure and algorithm are complex and heavy.
-However, contacted bubbles hinted starting point of an algorithm described later.
+Although bubbling is the elegant algorithm, the data structure and algorithm are complex and heavy.  However, contacted bubbles hinted starting point of an algorithm described later.
 
 ![bubbling](doc/fig/Voronoi_growth_euclidean.gif)
 
@@ -22,13 +21,13 @@ However, contacted bubbles hinted starting point of an algorithm described later
 ## Algorithm
 Our approach accepts a partial reconstruction.
 Maybe a novel approach. 
-Please contact me if you know a similar one.
+Please [contact us](https://github.com/toyaku-phys/bubble/issues) if you know a similar one.
 
 ### Discretization and Data Structure
 Voronoi cells are represented as a set of cones in our discretization.
 The center of the bottom of each cone is adjusted to match the boundary of the cell.
 In the discretization, overlaps and gaps of cones occur.
-The property that the actual cell and the discretized cell coincide with each other as the number of divisions increases is the same as when using a cubic voxel.
+The property that the actual cell and the discretized cell coincide with each other as the number of divisions increases is the same as when using [the cubic voxel](https://en.wikipedia.org/wiki/Voxel).
 The compressibility of information is higher when using a cone.
 
 ![bubbling](doc/fig/discretization.jpeg)
@@ -58,12 +57,17 @@ The length between ![Pk](doc/fig/Pk.svg) and the center of bottom of cone is a f
     5. Stack neighbor grid points of ![theta_phi](doc/fig/theta_phi.svg) using the network of grid points
     6. Stock the parameters of distance function as ![u_func_dash](doc/fig/u_func_dash.svg)
         - When ![theta_phi](doc/fig/theta_phi.svg) taken out from the stack, the stocked parameters are a parameters of distance function for neighbor of ![theta_phi](doc/fig/theta_phi.svg)
+
+<img src="doc/fig/cross_point.png" width="600px">
+
+#### Remarks
+1. If ![u_func](doc/fig/u_func.svg) is negative or infinite, the ![Rk](doc/fig/Rk_simple.svg) is open
     
-    Note: If ![u_func](doc/fig/u_func.svg) is negative or infinite, the ![Rk](doc/fig/Rk_simple.svg) is open.
-    <img src="doc/fig/cross_point.png" width="600px">
+2. The parameters of the distance function are calculated using [the Levenberg–Marquardt algorithm](https://en.wikipedia.org/wiki/Levenberg–Marquardt_algorithm)
+
 
 ## Contribution
-Pull Request
+[Pull Request](https://github.com/toyaku-phys/bubble/pulls)
 
 1. Fork it ( https://github.com/toyaku-phys/bubble/fork )
 2. Create your feature branch (git checkout -b my-new-feature)
@@ -71,7 +75,7 @@ Pull Request
 4. Push to the branch (git push origin my-new-feature)
 5. Create a new Pull Request to the bubble/master branch
 
-Issue
+[Issue](https://github.com/toyaku-phys/bubble/issues)
 
 1. Write your new feature or bug report
 
