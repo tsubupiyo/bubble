@@ -4,6 +4,3 @@
 [submodule "Levenberg-Marquardt"]
 	path = Levenberg-Marquardt
 	url = https://github.com/misteltein/Levenberg-Marquardt
-[submodule "Levenberg-Marquardt/Eigen-git-mirror"]
-	path = Levenberg-Marquardt/Eigen-git-mirror
-	url = https://github.com/eigenteam/eigen-git-mirror
