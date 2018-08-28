@@ -2,15 +2,28 @@
 
 int main()
 {
-   std::vector<Vector3D> cubic_lattice;
+   constexpr int N=5;
+   std::vector<Vector3D> cubic;
    {
-      constexpr int N=5;
       for(int x=0;x<N;++x)
       for(int y=0;y<N;++y)
       for(int z=0;z<N;++z)
       {
-         cubic_lattice.push_back(Vector3D(x,y,z));   
+         cubic.push_back(Vector3D(x,y,z));   
       }
+   }
+   std::vector<Vector3D> hcp;
+   {
+      
+   }
+   std::vector<Vector3D> random;
+   {
+      std::mt19937 mt;
+      std::uniform_real_distribution<double> dist(0,N);    
+      for(int x=0;x<N;++x)
+      for(int y=0;y<N;++y)
+      for(int z=0;z<N;++z)
+      random.push_back(Vector3D(dist(mt),dist(mt),dist(mt)));   
    }
    
    return EXIT_SUCCESS;   
