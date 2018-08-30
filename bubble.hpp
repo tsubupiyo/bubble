@@ -121,9 +121,10 @@ void Quadratic_function::set(const size_t& index_grid_point, Vector3D base, cons
    //2. sampling distance with constant +u (= unit length)
    for(size_t s=0;s<N_SAMPLING_CURVE;++s)
    {
-      base+=direction;
+      //base+=direction;
       xs.at(s)=static_cast<int>(s);
       ys.at(s)=(base-neighbor).norm();
+      base+=direction;
    }
    //3. get beta
    LM();
@@ -287,12 +288,12 @@ void Voronoi_cell::boundary_fitting()
          ref_beta.at(i)=qfs.at(i).get_parameter();
       }
       //find min(positive u)
-      const std::tuple<double,double,double>& beta_i = ref_beta.at(top);
+      const std::tuple<double,double,double>& beta_i = ref_beta.at(k.value());
       double min(DBL_MAX);//positive, and 0.5*min_distance<=
       size_t k_neighbor = std::numeric_limits<std::size_t>::max();
       for(size_t j=0,size=ps.size();j<size;++j)
       {
-         if(top==j){continue;}
+         if(k.value()==j){continue;}
          const double u_result = solve(beta_i,ref_beta.at(j),u.at(idx_ref_u).value());
          if((u_result>=0.0) && min>u_result)
          {
