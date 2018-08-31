@@ -6,6 +6,7 @@
 #include <set>
 #include <map>
 #include <array>
+#include <boost/dynamic_bitset.hpp>
 #include "Chaperone/constexpr_math.hpp"
 #include "Chaperone/NamedParameter.hpp"
 #include "Chaperone/Vector3D.hpp"
@@ -48,7 +49,11 @@ class Quadratic_function
       bool f_useable;
 };
 
-double solve(const std::tuple<double,double,double>& beta_1, const std::tuple<double,double,double>& beta_2, const double x_init=0.0);
+double solve
+(
+   const std::tuple<double,double,double>& beta, 
+   const double x_init=0.0
+);
 
 class Voronoi_cell
 {
@@ -148,7 +153,7 @@ void Quadratic_function::LM()
    if(xs.size()<5)return ;
    beta = LevMar(xs,ys, beta); 
    f_useable=true;
-   std::cout<<"beta: "<<std::get<0>(beta)<<" "<<std::get<1>(beta)<<" "<<std::get<2>(beta)<<std::endl;
+//   std::cout<<"beta: "<<std::get<0>(beta)<<" "<<std::get<1>(beta)<<" "<<std::get<2>(beta)<<std::endl;
 }
 
 std::set<k_<size_t> > Voronoi_cell::get_neighbor()const
@@ -255,12 +260,14 @@ void Voronoi_cell::boundary_fitting()
    }();
    std::cout<<"idx_grid_point_init: "<<idx_grid_point_init<<std::endl;
    ////3. fitting using filling algorithm
+   boost::dynamic_bitset<> filled((*P).size());
    constexpr u_<double> u0(DBL_MAX);
    for(size_t i=0;i<N_GRID_POINTS;++i)
    {
       u.at(i)=u0;
    }
    u.at(idx_grid_point_init).value()=0.5*min_distance;
+   filled[idx_grid_point_init]=true;
    std::cout<<"u init: "<<u.at(idx_grid_point_init).value()<<std::endl;
    const std::vector<Vector3D>& ps = *P;
    for(size_t i=0,size=ps.size();i<size;++i)
@@ -277,6 +284,7 @@ void Voronoi_cell::boundary_fitting()
    while(!stack.empty())
    {
       const auto [top,idx_ref_u] = stack.top(); stack.pop();
+      filled[top]=true;
       std::cout<<"top: "<<top<<std::endl;
       if(DBL_MAX!=u.at(top).value()){continue;}//In this case, u(pos) is calculated-grid-point.
       for(size_t i=0,size=ps.size();i<size;++i)//estimation of distance function for each k
@@ -288,13 +296,13 @@ void Voronoi_cell::boundary_fitting()
          ref_beta.at(i)=qfs.at(i).get_parameter();
       }
       //find min(positive u)
-      const std::tuple<double,double,double>& beta_i = ref_beta.at(k.value());
+      //const std::tuple<double,double,double>& beta_i = ref_beta.at(k.value());
       double min(DBL_MAX);//positive, and 0.5*min_distance<=
       size_t k_neighbor = std::numeric_limits<std::size_t>::max();
       for(size_t j=0,size=ps.size();j<size;++j)
       {
          if(k.value()==j){continue;}
-         const double u_result = solve(beta_i,ref_beta.at(j),u.at(idx_ref_u).value());
+         const double u_result = solve(ref_beta.at(j),u.at(idx_ref_u).value());
          if((u_result>=0.0) && min>u_result)
          {
             min=u_result;
@@ -304,8 +312,10 @@ void Voronoi_cell::boundary_fitting()
       u.at(top).value()=min;
       if(std::numeric_limits<std::size_t>::max()!=k_neighbor){K.insert(k_<size_t>(k_neighbor));};
       //If u is still DBL_MAX, the space in the direction is open.
+      //TODO::make flag vector
       for(size_t i=0;i<N_NEIGHBOR;++i)
       {
+         if(!filled[network.at(top).at(i)])
          stack.push({network.at(top).at(i),top});
       }
    }
@@ -325,43 +335,34 @@ void Voronoi_diagram::change_pointer(std::vector<Vector3D> const * ps)
 
 double solve
 (
-   const std::tuple<double,double,double>& beta_1, 
-   const std::tuple<double,double,double>& beta_2, 
+   const std::tuple<double,double,double>& beta, 
    const double x_init
 )
-{//Newton's method + damping
-   const double A = std::get<0>(beta_1)-std::get<0>(beta_2);
-   const double B = std::get<1>(beta_1)-std::get<1>(beta_2);
-   const double C = std::get<2>(beta_1)-std::get<2>(beta_2);
-
-   const auto f = [&](const double u)->std::tuple<double,double>
+{
+   constexpr double alpha = 0.001;
+   const double& a = std::get<0>(beta);
+   const double& b = std::get<1>(beta);
+   const double& c = std::get<2>(beta);
+   auto fx =[&](const double& x)->double
    {
-      return 
-      {
-         A*u*u+B*u+C,//f(u)
-         2*A*u+B//f'(u)
-      };
+      return a*x*x+(b-1)*x+c; 
    };
-
-   double x   = x_init;
-   double xp1 = x_init;
-   std::tuple<double,double> ff;
-   constexpr double EPS_NEWTON      = 0.000001;
-   constexpr double LMD_NEWTON      = 0.1;
-   constexpr int NEWTON_COUNT_LIMIT = 100;
-   int count=0;
-
+   auto update=[&](const double& x)->double
+   {
+      const double fx_res=fx(x);
+      return x-alpha*(2*a*x+b-1)*fx_res/std::abs(fx_res);
+   };
+   double x_k1 = 0;
+   double x    = 1;
    do
    {
-      x   = xp1;
-      ff  = f(x);
-      xp1 = x - std::get<0>(ff) / (std::get<1>(ff) * (1 + LMD_NEWTON));
-      if(++count > NEWTON_COUNT_LIMIT){break;}
-   }while( std::abs( (xp1 + x) / x) > EPS_NEWTON);
-
-   std::cout<<"res: abc abc: "<<x<<" "<<std::get<0>(beta_1)<<" "<<std::get<1>(beta_1)<<" "<<std::get<2>(beta_1)<<" "<<std::get<0>(beta_2)<<" "<<std::get<1>(beta_2)<<" "<<std::get<2>(beta_2)<<std::endl;
-
-   return x;
+      std::cout<<"mismatch:"<<std::abs(x_k1-x)<<std::endl;
+      x=x_k1;
+      x_k1=update(x);
+   }
+   while(std::abs(fx(x_k1)-fx(x))>0.1);
+   std::cout<<"solve: "<<x_k1<<std::endl;
+   return x_k1;
 }
 
 std::list<k_<size_t> > Voronoi_diagram::get_partial_Delaunay_diagram(const k_<size_t>& center)const
