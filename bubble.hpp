@@ -22,7 +22,7 @@ NP_MAKE_NAMED_PARAMETER(d);//distance between two points
 
 constexpr size_t N_GRID_POINTS= 100;
 constexpr size_t N_SAMPLING_CURVE = 10;
-constexpr size_t N_NEIGHBOR = 6;
+[[deprecated]]constexpr size_t N_NEIGHBOR = 10;
 #include "grid.hpp"
 
 bool operator<(const k_<size_t>& a, const k_<size_t>& b)
@@ -31,7 +31,7 @@ bool operator<(const k_<size_t>& a, const k_<size_t>& b)
 }
 
 std::vector<std::tuple<theta_<double>,phi_<double> > > grid_points = generate_random_theta_phi();
-std::vector<std::array<size_t, N_NEIGHBOR> >           network     = generate_network(grid_points);
+std::vector<std::list<size_t>> network = get_network(grid_points);
 
 class Quadratic_function
 {  //y = a*x*x + b*x + c
@@ -272,9 +272,12 @@ void Voronoi_cell::boundary_fitting()
       ref_beta.at(i)=qfs.at(i).get_parameter();
    }
    std::stack<std::tuple<size_t,size_t> > stack;//2nd is ref-index of 1st(k)
-   for(size_t i=0;i<N_NEIGHBOR;++i)
+   //for(size_t i=0;i<N_NEIGHBOR;++i)
+   for(auto it=network.at(idx_grid_point_init).begin();
+   it!=network.at(idx_grid_point_init).end();++it)
    {
-      stack.push({network.at(idx_grid_point_init).at(i),idx_grid_point_init});
+      //stack.push({network.at(idx_grid_point_init).at(i),idx_grid_point_init});
+      stack.push({*it,idx_grid_point_init});
    }
    K.clear();
    while(!stack.empty())
@@ -308,11 +311,11 @@ void Voronoi_cell::boundary_fitting()
       u.at(top).value()=min;
       if(std::numeric_limits<std::size_t>::max()!=k_neighbor){K.insert(k_<size_t>(k_neighbor));};
       //If u is still DBL_MAX, the space in the direction is open.
-      //TODO::make flag vector
-      for(size_t i=0;i<N_NEIGHBOR;++i)
+      for(auto it=network.at(idx_grid_point_init).begin();
+      it!=network.at(idx_grid_point_init).end();++it)
       {
-         if(!filled[network.at(top).at(i)])
-         stack.push({network.at(top).at(i),top});
+         if(!filled[*it])
+         stack.push({*it,top});
       }
    }
 }

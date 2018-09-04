@@ -5,7 +5,7 @@ std::mt19937_64 mt_grid(265278465287);
 
 #define PATH_TO_GRID_POINTS_SOURCE "GRID_POINTS_SOURCE"
 std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi();
-std::vector<std::array<size_t, 6> > generate_network(const std::vector<std::tuple<theta_<double>,phi_<double> > >& ps);
+std::vector<std::array<size_t, N_NEIGHBOR> > generate_network(const std::vector<std::tuple<theta_<double>,phi_<double> > >& ps);
 
 inline Vector3D S2R (const std::tuple<theta_<double>,phi_<double> >& p)
 {
@@ -58,11 +58,12 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
 
    const auto LJ = [](const double& distance)->double
    {
-      constexpr double EPS = 1.0;
-      constexpr double sigma = cexpr_math::sqrt(1.0/N_GRID_POINTS);
-      const double six = std::pow(sigma/distance,6);
-      const double twl = std::pow(six,2);
-      const auto res = 4.0*EPS*(twl-six);
+      //constexpr double EPS = 1.0;
+      //constexpr double sigma = 2*cexpr_math::sqrt(1.0/N_GRID_POINTS);
+      //const double six = std::pow(sigma/distance,6);
+      //const double twl = std::pow(six,2);
+      //const auto res = 4.0*EPS*(twl-six);
+      const auto res = std::pow(1.0/distance,6);
       return res;
    };
 
@@ -132,32 +133,107 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
    return random_points; 
 }
 
-std::vector<std::array<size_t, 6> > generate_network
+std::vector<std::array<size_t, N_NEIGHBOR> > generate_network
 (
    const std::vector<std::tuple<theta_<double>,phi_<double> > >& ps
 )
 {
-   std::vector<std::array<size_t, 6> > res(ps.size(),std::array<size_t,6>());
+   std::vector<std::array<size_t, N_NEIGHBOR> > res(ps.size(),std::array<size_t,N_NEIGHBOR>());
    for(size_t i=0,size=ps.size();i<size;++i)
    {
       std::vector<std::tuple<size_t,double> > rank;
       for(size_t nbr=0;nbr<size;++nbr)
       {
-         if(i!=nbr)
-         {
-            rank.push_back(std::tuple<size_t,double>
-               (
-                  nbr,
-                  (S2R(ps.at(i))-S2R(ps.at(nbr))).norm()
-               )
-            );
-         }
+         rank.push_back(std::tuple<size_t,double>
+            (
+               nbr,
+               (S2R(ps.at(i))-S2R(ps.at(nbr))).norm()
+            )
+         );
       }
       std::sort(rank.begin(),rank.end(),[](const auto& a, const auto& b){return std::get<double>(a)<std::get<double>(b);});
-      for(size_t s=0;s<6;++s)
+      for(size_t s=1;s<=N_NEIGHBOR;++s)
       {
-         res.at(i).at(s)=std::get<size_t>(rank.at(s));
+         res.at(i).at(s-1)=std::get<size_t>(rank.at(s));
       }
    }
    return res;
 }
+
+std::vector<std::list<size_t> > get_network
+(
+   const std::vector<std::tuple<theta_<double>,phi_<double> > >& ps
+)
+{
+   const std::vector<Vector3D> P = [ps]()
+   {
+      std::vector<Vector3D> res;
+      for(size_t i=0,size=ps.size();i<size;++i)
+      {
+         res.push_back(S2R(ps.at(i))); 
+      }
+      return res; 
+   }();
+   std::stack<size_t> marvericks = [&P]()
+   {
+      std::stack<size_t> res;
+      for(size_t i=1,size=P.size();i<size;++i)
+      {
+         res.push(i);
+      }
+      return res;
+   }();   
+   std::list<std::tuple<size_t,size_t> > graph;
+   const auto find_nearest_neighbor = [&P](size_t pos)
+   {
+      double min = DBL_MAX; 
+      size_t min_pos;
+      for(size_t i=0,size=P.size();i<size;++i)
+      {
+         if(pos!=i)
+         {
+            const double distance = (P.at(pos)-P.at(i)).norm2();
+            if(distance<min){min=distance;min_pos=i;}
+         }
+      }
+      return min_pos; 
+   };
+   graph.push_back(std::tuple<size_t,size_t>(0,find_nearest_neighbor(0)));
+   graph.push_back(std::tuple<size_t,size_t>(find_nearest_neighbor(0),0));
+
+   const auto find_in_graph = [&graph,&P](size_t pos)->size_t
+   {
+      double min = DBL_MAX;
+      size_t min_pos;
+      const Vector3D& p_pos = P.at(pos);
+      for(auto it=graph.begin();it!=graph.end();++it)
+      {
+         const size_t& tmp = std::get<0>(*it);   
+         const double distance = (P.at(tmp)-p_pos).norm2();
+         if(min>distance){min=distance;min_pos=tmp;}
+      }
+      return min_pos; 
+   };
+
+   while(!marvericks.empty())
+   {
+      const size_t top = marvericks.top();
+      const size_t nbr = find_in_graph(top);
+      graph.push_back(std::tuple<size_t,size_t>(top,nbr));
+      graph.push_back(std::tuple<size_t,size_t>(nbr,top));
+      marvericks.pop();
+   }
+   //TODO:: graph->  std::vector<std::list<size_t> >
+   std::vector<std::list<size_t>> result;
+   for(size_t i=0,size=P.size();i<size;++i)
+   {
+      std::list<size_t> nbrs;
+      for(auto it=graph.begin();it!=graph.end();++it)
+      {
+         if(i==std::get<0>(*it)){nbrs.push_back(std::get<1>(*it));}   
+      }
+      result.push_back(nbrs);
+   }
+   return result;
+}
+

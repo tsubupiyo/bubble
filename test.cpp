@@ -2,6 +2,19 @@
 
 int main()
 {
+   //preview network
+   for(size_t i=0,size=grid_points.size();i<size;++i)
+   {
+      const auto& nbrs = network.at(i);   
+      for(auto it=nbrs.begin();it!=nbrs.end();++it)
+      {
+         std::cout<<S2R(grid_points.at(i))<<std::endl;   
+         std::cout<<S2R(grid_points.at(*it))<<std::endl;   
+         std::cout<<std::endl;
+      }
+   }
+   exit(0);
+
    constexpr int N=5;
    std::vector<Vector3D> cubic;
    {
