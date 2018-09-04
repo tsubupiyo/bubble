@@ -22,7 +22,6 @@ NP_MAKE_NAMED_PARAMETER(d);//distance between two points
 
 constexpr size_t N_GRID_POINTS= 50;
 constexpr size_t N_SAMPLING_CURVE = 10;
-[[deprecated]]constexpr size_t N_NEIGHBOR = 10;
 #include "grid.hpp"
 
 bool operator<(const k_<size_t>& a, const k_<size_t>& b)
@@ -100,7 +99,6 @@ Quadratic_function::Quadratic_function(const double& a_, const double& b_, const
    ys.resize(N_SAMPLING_CURVE);
 }
 
-#warning//betaの値が変だからこの関数あやしい
 void Quadratic_function::set(const size_t& index_grid_point, Vector3D base, const Vector3D& neighbor, const std::tuple<double,double,double>& ref_beta)
 {
    f_useable=false;
