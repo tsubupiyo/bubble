@@ -48,7 +48,7 @@ class Quadratic_function
       bool f_useable;
 };
 
-double solve(const std::tuple<double,double,double>& beta);
+std::tuple<double,double> solve(const std::tuple<double,double,double>& beta);
 
 class Voronoi_cell
 {
@@ -259,6 +259,7 @@ void Voronoi_cell::boundary_fitting()
    for(size_t i=0;i<N_GRID_POINTS;++i)
    {
       u.at(i)=u0;
+      filled[i]=false;
    }
    u.at(idx_grid_point_init).value()=0.5*min_distance;
    filled[idx_grid_point_init]=true;
@@ -299,18 +300,24 @@ void Voronoi_cell::boundary_fitting()
       for(size_t j=0,size=ps.size();j<size;++j)
       {
          if(k.value()==j){continue;}
-         const double u_result = solve(ref_beta.at(j));
-         if((u_result>=0.0) && min>u_result)
+//         const double u_result = solve(ref_beta.at(j));
+         const auto [alpha,bravo] = solve(ref_beta.at(j));
+         if((alpha>=0.0) && min>alpha)
          {
-            min=u_result;
+            min=alpha;
+            k_neighbor=j;
+         }
+         if((bravo>=0.0) && min>bravo)
+         {
+            min=bravo;
             k_neighbor=j;
          }
       }
       u.at(top).value()=min;
       if(std::numeric_limits<std::size_t>::max()!=k_neighbor){K.insert(k_<size_t>(k_neighbor));};
       //If u is still DBL_MAX, the space in the direction is open.
-      for(auto it=network.at(idx_grid_point_init).begin();
-      it!=network.at(idx_grid_point_init).end();++it)
+      for(auto it=network.at(top).begin();
+      it!=network.at(top).end();++it)
       {
          if(!filled[*it])
          stack.push({*it,top});
@@ -330,7 +337,7 @@ void Voronoi_diagram::change_pointer(std::vector<Vector3D> const * ps)
    std::for_each(R.begin(),R.end(),[this](auto& r){r.change_pointer(P);});
 }
 
-double solve
+std::tuple<double,double> solve
 (
    const std::tuple<double,double,double>& beta
 )
@@ -340,11 +347,10 @@ double solve
    const double& c = std::get<2>(beta);
    const double root = std::sqrt(b*b-4*a*c);
    return 
-   std::max
-   (
+   {
       -(root+b)/(2*a),
       +(root-b)/(2*a)
-   );
+   };
 }
 
 std::list<k_<size_t> > Voronoi_diagram::get_partial_Delaunay_diagram(const k_<size_t>& center)const
