@@ -6,6 +6,7 @@
 #include <set>
 #include <map>
 #include <array>
+#include <boost/dynamic_bitset.hpp>
 #include "Chaperone/constexpr_math.hpp"
 #include "Chaperone/NamedParameter.hpp"
 #include "Chaperone/Vector3D.hpp"
@@ -48,7 +49,7 @@ class Quadratic_function
       bool f_useable;
 };
 
-double solve(const std::tuple<double,double,double>& beta_1, const std::tuple<double,double,double>& beta_2, const double x_init=0.0);
+double solve(const std::tuple<double,double,double>& beta);
 
 class Voronoi_cell
 {
@@ -87,23 +88,24 @@ Quadratic_function::Quadratic_function()
 {
    beta={0.0,0.0,0.0};
    f_useable=false;
-   xs.reserve(N_SAMPLING_CURVE);
-   ys.reserve(N_SAMPLING_CURVE);
+   xs.resize(N_SAMPLING_CURVE);
+   ys.resize(N_SAMPLING_CURVE);
 }
 
 Quadratic_function::Quadratic_function(const double& a_, const double& b_, const double& c_)
 {
    beta={a_,b_,c_};
    f_useable=false;
-   xs.reserve(N_SAMPLING_CURVE);
-   ys.reserve(N_SAMPLING_CURVE);
+   xs.resize(N_SAMPLING_CURVE);
+   ys.resize(N_SAMPLING_CURVE);
 }
 
+#warning//betaの値が変だからこの関数あやしい
 void Quadratic_function::set(const size_t& index_grid_point, Vector3D base, const Vector3D& neighbor, const std::tuple<double,double,double>& ref_beta)
 {
    f_useable=false;
    beta=ref_beta;
-   const auto& gp = grid_points.at(index_grid_point);
+   const auto&   gp       = grid_points.at(index_grid_point);
    const double& gp_theta = (std::get<theta_<double> >(gp)).value();
    const double& gp_phi   = (std::get<phi_<double>   >(gp)).value();
    //1. get direction vector
@@ -120,9 +122,10 @@ void Quadratic_function::set(const size_t& index_grid_point, Vector3D base, cons
    //2. sampling distance with constant +u (= unit length)
    for(size_t s=0;s<N_SAMPLING_CURVE;++s)
    {
-      base+=direction;
+      //base+=direction;
       xs.at(s)=static_cast<int>(s);
       ys.at(s)=(base-neighbor).norm();
+      base+=direction;
    }
    //3. get beta
    LM();
@@ -146,6 +149,7 @@ void Quadratic_function::LM()
    if(xs.size()<5)return ;
    beta = LevMar(xs,ys, beta); 
    f_useable=true;
+//   std::cout<<"beta: "<<std::get<0>(beta)<<" "<<std::get<1>(beta)<<" "<<std::get<2>(beta)<<std::endl;
 }
 
 std::set<k_<size_t> > Voronoi_cell::get_neighbor()const
@@ -167,8 +171,14 @@ Voronoi_cell::Voronoi_cell(const k_<size_t>& i, std::vector<Vector3D> const * ps
 {
    k=i;
    change_pointer(ps);
-   qfs.resize(N_GRID_POINTS);
-   ref_beta.resize(N_GRID_POINTS);
+   qfs.resize((*P).size());
+   u.resize(N_GRID_POINTS);
+   ref_beta.resize((*P).size());
+   boundary_fitting();
+   for(size_t i_=0,size=u.size();i_<size;++i_)
+   {
+      std::cout<<"u: "<<u.at(i_).value()<<std::endl;
+   }
 }
 
 void Voronoi_cell::change_pointer(std::vector<Vector3D> const * ps)
@@ -205,10 +215,13 @@ void Voronoi_cell::boundary_fitting()
             const Vector3D& pnt = ps.at(i);
             const double dis = (pnt-center).norm();
             if(dis<min){min=dis;min_k_.value()=i;}
+            std::cout<<pnt<<std::endl;
          }
       }
       return {min,min_k_};
    }();
+   std::cout<<"min_distance: "<<min_distance<<std::endl;
+   std::cout<<"min_k: "<<min_k.value()<<std::endl;
    //2. search nearest grid point
    const auto idx_grid_point_init = [min_k=min_k,this]()->size_t
    {
@@ -241,42 +254,51 @@ void Voronoi_cell::boundary_fitting()
       }
       return min_index;
    }();
+   std::cout<<"idx_grid_point_init: "<<idx_grid_point_init<<std::endl;
    ////3. fitting using filling algorithm
+   boost::dynamic_bitset<> filled((*P).size());
    constexpr u_<double> u0(DBL_MAX);
    for(size_t i=0;i<N_GRID_POINTS;++i)
    {
       u.at(i)=u0;
    }
    u.at(idx_grid_point_init).value()=0.5*min_distance;
+   filled[idx_grid_point_init]=true;
+   std::cout<<"u init: "<<u.at(idx_grid_point_init).value()<<std::endl;
    const std::vector<Vector3D>& ps = *P;
-   for(size_t i=0;i<N_GRID_POINTS;++i)
+   for(size_t i=0,size=ps.size();i<size;++i)
    {
-      qfs.at(i).set(i,ps.at(k.value()),ps.at(i));
+      qfs.at(i).set(idx_grid_point_init,ps.at(k.value()),ps.at(i));
       ref_beta.at(i)=qfs.at(i).get_parameter();
    }
    std::stack<std::tuple<size_t,size_t> > stack;//2nd is ref-index of 1st(k)
-   stack.push({idx_grid_point_init,idx_grid_point_init});
+   for(size_t i=0;i<N_NEIGHBOR;++i)
+   {
+      stack.push({network.at(idx_grid_point_init).at(i),idx_grid_point_init});
+   }
    K.clear();
    while(!stack.empty())
    {
       const auto [top,idx_ref_u] = stack.top(); stack.pop();
+      filled[top]=true;
+      std::cout<<"top: "<<top<<std::endl;
       if(DBL_MAX!=u.at(top).value()){continue;}//In this case, u(pos) is calculated-grid-point.
-      for(size_t i=0;i<N_GRID_POINTS;++i)//estimation of distance function for each k
+      for(size_t i=0,size=ps.size();i<size;++i)//estimation of distance function for each k
       {
-         qfs.at(i).set(i,ps.at(k.value()),ps.at(i),ref_beta.at(i));
+         qfs.at(i).set(top,ps.at(k.value()),ps.at(i),ref_beta.at(i));
       }
-      for(size_t i=0;i<N_GRID_POINTS;++i)//To stock & To lighten the next estimation
+      for(size_t i=0,size=ps.size();i<size;++i)//To stock & To lighten the next estimation
       {
          ref_beta.at(i)=qfs.at(i).get_parameter();
       }
       //find min(positive u)
-      const std::tuple<double,double,double>& beta_i = ref_beta.at(top);
+      //const std::tuple<double,double,double>& beta_i = ref_beta.at(k.value());
       double min(DBL_MAX);//positive, and 0.5*min_distance<=
       size_t k_neighbor = std::numeric_limits<std::size_t>::max();
-      for(size_t j=0;j<N_GRID_POINTS;++j)
+      for(size_t j=0,size=ps.size();j<size;++j)
       {
-         if(top==j){continue;}
-         const double u_result = solve(beta_i,ref_beta.at(j),u.at(idx_ref_u).value());
+         if(k.value()==j){continue;}
+         const double u_result = solve(ref_beta.at(j));
          if((u_result>=0.0) && min>u_result)
          {
             min=u_result;
@@ -286,8 +308,10 @@ void Voronoi_cell::boundary_fitting()
       u.at(top).value()=min;
       if(std::numeric_limits<std::size_t>::max()!=k_neighbor){K.insert(k_<size_t>(k_neighbor));};
       //If u is still DBL_MAX, the space in the direction is open.
+      //TODO::make flag vector
       for(size_t i=0;i<N_NEIGHBOR;++i)
       {
+         if(!filled[network.at(top).at(i)])
          stack.push({network.at(top).at(i),top});
       }
    }
@@ -307,41 +331,19 @@ void Voronoi_diagram::change_pointer(std::vector<Vector3D> const * ps)
 
 double solve
 (
-   const std::tuple<double,double,double>& beta_1, 
-   const std::tuple<double,double,double>& beta_2, 
-   const double x_init
+   const std::tuple<double,double,double>& beta
 )
-{//Newton's method + damping
-   const double A = std::get<0>(beta_1)-std::get<0>(beta_2);
-   const double B = std::get<1>(beta_1)-std::get<1>(beta_2);
-   const double C = std::get<2>(beta_1)-std::get<2>(beta_2);
-
-   const auto f = [&](const double u)->std::tuple<double,double>
-   {
-      return 
-      {
-         A*u*u+B*u+C,//f(u)
-         2*A*u+B//f'(u)
-      };
-   };
-
-   double x   = x_init;
-   double xp1 = x_init;
-   std::tuple<double,double> ff;
-   constexpr double EPS_NEWTON      = 0.000001;
-   constexpr double LMD_NEWTON      = 0.1;
-   constexpr int NEWTON_COUNT_LIMIT = 100;
-   int count=0;
-
-   do
-   {
-      x   = xp1;
-      ff  = f(x);
-      xp1 = x - std::get<0>(ff) / (std::get<1>(ff) * (1 + LMD_NEWTON));
-      if(++count > NEWTON_COUNT_LIMIT){break;}
-   }while( std::abs( (xp1 + x) / x) > EPS_NEWTON);
-
-   return x;
+{
+   const double& a = std::get<0>(beta);
+   const double  b = std::get<1>(beta)-1; 
+   const double& c = std::get<2>(beta);
+   const double root = std::sqrt(b*b-4*a*c);
+   return 
+   std::max
+   (
+      -(root+b)/(2*a),
+      +(root-b)/(2*a)
+   );
 }
 
 std::list<k_<size_t> > Voronoi_diagram::get_partial_Delaunay_diagram(const k_<size_t>& center)const
