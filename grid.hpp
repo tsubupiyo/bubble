@@ -6,7 +6,7 @@ std::mt19937_64 mt_grid(265278465287);
 
 #define PATH_TO_GRID_POINTS_SOURCE "GRID_POINTS_SOURCE"
 std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi();
-std::vector<std::array<size_t, N_NEIGHBOR> > generate_network(const std::vector<std::tuple<theta_<double>,phi_<double> > >& ps);
+std::vector<std::list<size_t> > get_network(const std::vector<std::tuple<theta_<double>,phi_<double> > >& ps);
 
 inline Vector3D S2R (const std::tuple<theta_<double>,phi_<double> >& p)
 {
@@ -117,7 +117,6 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
             E_current=E_new;
          }
       }
-      //std::cout<<s<<" "<<E_current<<std::endl;
    }
    std::ofstream ofs(PATH_TO_GRID_POINTS_SOURCE,std::ios::trunc);
    boost::format fmt("%1.15e %1.15e\n");
@@ -127,33 +126,6 @@ std::vector<std::tuple<theta_<double>,phi_<double> > > generate_random_theta_phi
    }
    
    return random_points; 
-}
-
-std::vector<std::array<size_t, N_NEIGHBOR> > generate_network
-(
-   const std::vector<std::tuple<theta_<double>,phi_<double> > >& ps
-)
-{
-   std::vector<std::array<size_t, N_NEIGHBOR> > res(ps.size(),std::array<size_t,N_NEIGHBOR>());
-   for(size_t i=0,size=ps.size();i<size;++i)
-   {
-      std::vector<std::tuple<size_t,double> > rank;
-      for(size_t nbr=0;nbr<size;++nbr)
-      {
-         rank.push_back(std::tuple<size_t,double>
-            (
-               nbr,
-               (S2R(ps.at(i))-S2R(ps.at(nbr))).norm()
-            )
-         );
-      }
-      std::sort(rank.begin(),rank.end(),[](const auto& a, const auto& b){return std::get<double>(a)<std::get<double>(b);});
-      for(size_t s=1;s<=N_NEIGHBOR;++s)
-      {
-         res.at(i).at(s-1)=std::get<size_t>(rank.at(s));
-      }
-   }
-   return res;
 }
 
 std::vector<std::list<size_t> > get_network
