@@ -25,7 +25,7 @@ int main()
    //   for(int z=0;z<N;++z)
    //   random.push_back(Vector3D(dist(mt),dist(mt),dist(mt)));   
    //}
-   Voronoi_cell vc(k=60,&cubic);
+   Voronoi_cell vc(k=0,&cubic);
 //   std::cout<<vc.get_volume()<<std::endl;
    
    return EXIT_SUCCESS;   

@@ -49,11 +49,7 @@ class Quadratic_function
       bool f_useable;
 };
 
-double solve
-(
-   const std::tuple<double,double,double>& beta, 
-   const double x_init=0.0
-);
+double solve(const std::tuple<double,double,double>& beta);
 
 class Voronoi_cell
 {
@@ -302,7 +298,7 @@ void Voronoi_cell::boundary_fitting()
       for(size_t j=0,size=ps.size();j<size;++j)
       {
          if(k.value()==j){continue;}
-         const double u_result = solve(ref_beta.at(j),u.at(idx_ref_u).value());
+         const double u_result = solve(ref_beta.at(j));
          if((u_result>=0.0) && min>u_result)
          {
             min=u_result;
@@ -335,34 +331,19 @@ void Voronoi_diagram::change_pointer(std::vector<Vector3D> const * ps)
 
 double solve
 (
-   const std::tuple<double,double,double>& beta, 
-   const double x_init
+   const std::tuple<double,double,double>& beta
 )
 {
-   constexpr double alpha = 0.001;
    const double& a = std::get<0>(beta);
-   const double& b = std::get<1>(beta);
+   const double  b = std::get<1>(beta)-1; 
    const double& c = std::get<2>(beta);
-   auto fx =[&](const double& x)->double
-   {
-      return a*x*x+(b-1)*x+c; 
-   };
-   auto update=[&](const double& x)->double
-   {
-      const double fx_res=fx(x);
-      return x-alpha*(2*a*x+b-1)*fx_res/std::abs(fx_res);
-   };
-   double x_k1 = 0;
-   double x    = 1;
-   do
-   {
-      std::cout<<"mismatch:"<<std::abs(x_k1-x)<<std::endl;
-      x=x_k1;
-      x_k1=update(x);
-   }
-   while(std::abs(fx(x_k1)-fx(x))>0.1);
-   std::cout<<"solve: "<<x_k1<<std::endl;
-   return x_k1;
+   const double root = std::sqrt(b*b-4*a*c);
+   return 
+   std::max
+   (
+      -(root+b)/(2*a),
+      +(root-b)/(2*a)
+   );
 }
 
 std::list<k_<size_t> > Voronoi_diagram::get_partial_Delaunay_diagram(const k_<size_t>& center)const
