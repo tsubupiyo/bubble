@@ -11,6 +11,7 @@ int main()
          std::cout<<S2R(grid_points.at(i))<<std::endl;   
          std::cout<<S2R(grid_points.at(*it))<<std::endl;   
          std::cout<<std::endl;
+         std::cout<<std::endl;
       }
    }
    exit(0);

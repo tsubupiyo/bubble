@@ -20,7 +20,7 @@ NP_MAKE_NAMED_PARAMETER(u);//amplitude
 NP_MAKE_NAMED_PARAMETER(k);//index of element of P
 NP_MAKE_NAMED_PARAMETER(d);//distance between two points
 
-constexpr size_t N_GRID_POINTS= 100;
+constexpr size_t N_GRID_POINTS= 50;
 constexpr size_t N_SAMPLING_CURVE = 10;
 [[deprecated]]constexpr size_t N_NEIGHBOR = 10;
 #include "grid.hpp"
