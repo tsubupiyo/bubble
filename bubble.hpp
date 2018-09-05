@@ -175,7 +175,7 @@ Voronoi_cell::Voronoi_cell(const k_<size_t>& i, std::vector<Vector3D> const * ps
    boundary_fitting();
    for(size_t i_=0,size=u.size();i_<size;++i_)
    {
-      std::cout<<"u: "<<u.at(i_).value()<<std::endl;
+      std::cout<<i_<<" u: "<<u.at(i_).value()<<std::endl;
    }
 }
 
@@ -213,13 +213,13 @@ void Voronoi_cell::boundary_fitting()
             const Vector3D& pnt = ps.at(i);
             const double dis = (pnt-center).norm();
             if(dis<min){min=dis;min_k_.value()=i;}
-            std::cout<<pnt<<std::endl;
+            //std::cout<<pnt<<std::endl;
          }
       }
       return {min,min_k_};
    }();
-   std::cout<<"min_distance: "<<min_distance<<std::endl;
-   std::cout<<"min_k: "<<min_k.value()<<std::endl;
+   //std::cout<<"min_distance: "<<min_distance<<std::endl;
+   //std::cout<<"min_k: "<<min_k.value()<<std::endl;
    //2. search nearest grid point
    const auto idx_grid_point_init = [min_k=min_k,this]()->size_t
    {
@@ -263,7 +263,7 @@ void Voronoi_cell::boundary_fitting()
    }
    u.at(idx_grid_point_init).value()=0.5*min_distance;
    filled[idx_grid_point_init]=true;
-   std::cout<<"u init: "<<u.at(idx_grid_point_init).value()<<std::endl;
+   //std::cout<<"u init: "<<u.at(idx_grid_point_init).value()<<std::endl;
    const std::vector<Vector3D>& ps = *P;
    for(size_t i=0,size=ps.size();i<size;++i)
    {
@@ -271,20 +271,14 @@ void Voronoi_cell::boundary_fitting()
       ref_beta.at(i)=qfs.at(i).get_parameter();
    }
    std::stack<std::tuple<size_t,size_t> > stack;//2nd is ref-index of 1st(k)
-   //for(size_t i=0;i<N_NEIGHBOR;++i)
-   for(auto it=network.at(idx_grid_point_init).begin();
-   it!=network.at(idx_grid_point_init).end();++it)
-   {
-      //stack.push({network.at(idx_grid_point_init).at(i),idx_grid_point_init});
-      stack.push({*it,idx_grid_point_init});
-   }
+   stack.push({idx_grid_point_init,idx_grid_point_init});
    K.clear();
    while(!stack.empty())
    {
       const auto [top,idx_ref_u] = stack.top(); stack.pop();
       filled[top]=true;
-      std::cout<<"top: "<<top<<std::endl;
-      if(DBL_MAX!=u.at(top).value()){continue;}//In this case, u(pos) is calculated-grid-point.
+      //std::cout<<"top: "<<top<<std::endl;
+      if(top!=idx_grid_point_init && DBL_MAX!=u.at(top).value()){continue;}//In this case, u(pos) is calculated-grid-point.
       for(size_t i=0,size=ps.size();i<size;++i)//estimation of distance function for each k
       {
          qfs.at(i).set(top,ps.at(k.value()),ps.at(i),ref_beta.at(i));
@@ -300,7 +294,6 @@ void Voronoi_cell::boundary_fitting()
       for(size_t j=0,size=ps.size();j<size;++j)
       {
          if(k.value()==j){continue;}
-//         const double u_result = solve(ref_beta.at(j));
          const auto [alpha,bravo] = solve(ref_beta.at(j));
          if((alpha>=0.0) && min>alpha)
          {
