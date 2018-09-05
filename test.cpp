@@ -24,6 +24,11 @@ int main()
       for(int z=0;z<N;++z)
       {
          cubic.push_back(Vector3D(x,y,z));   
+         //if(x==3 && y==3 && z==3)
+         //{
+         //   std::cout<<"size:"<<cubic.size()<<std::endl;
+         //   exit(0);
+         //}
       }
    }
    //std::vector<Vector3D> hcp;
@@ -39,8 +44,12 @@ int main()
    //   for(int z=0;z<N;++z)
    //   random.push_back(Vector3D(dist(mt),dist(mt),dist(mt)));   
    //}
-   Voronoi_cell vc(k=0,&cubic);
-//   std::cout<<vc.get_volume()<<std::endl;
+
+   //for(size_t i=0,size=cubic.size();i<size;++i)
+   //{
+      Voronoi_cell vc(k=1,&cubic);
+      std::cout<<vc.get_volume()<<std::endl;
+   //}
    
    return EXIT_SUCCESS;   
 }
