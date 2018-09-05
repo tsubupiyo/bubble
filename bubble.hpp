@@ -46,6 +46,8 @@ class Quadratic_function
       std::vector<double> ys;
       std::vector<double> xs;
       bool f_useable;
+   public:
+      double mismatch()const;
 };
 
 std::tuple<double,double> solve(const std::tuple<double,double,double>& beta);
@@ -147,7 +149,19 @@ void Quadratic_function::LM()
    if(xs.size()<5)return ;
    beta = LevMar(xs,ys, beta); 
    f_useable=true;
-//   std::cout<<"beta: "<<std::get<0>(beta)<<" "<<std::get<1>(beta)<<" "<<std::get<2>(beta)<<std::endl;
+}
+
+double Quadratic_function::mismatch()const
+{
+   double sum_sqr_error=0.0;
+   for(size_t i=0,size=xs.size();i<size;++i)
+   {
+      sum_sqr_error+=sqr(ys.at(i)-std::get<0>(beta)*sqr(xs.at(i))+std::get<1>(beta)*xs.at(i)+std::get<2>(beta));
+    //  std::cout<<xs.at(i)<<" "<<ys.at(i)<<std::endl;
+   }
+   std::cout<<std::get<0>(beta)<<" "<<std::get<1>(beta)<<" "<<std::get<2>(beta)<<std::endl;
+   //exit(0);
+   return std::sqrt(sum_sqr_error/((int)(xs.size())));
 }
 
 std::set<k_<size_t> > Voronoi_cell::get_neighbor()const
@@ -269,7 +283,9 @@ void Voronoi_cell::boundary_fitting()
    {
       qfs.at(i).set(idx_grid_point_init,ps.at(k.value()),ps.at(i));
       ref_beta.at(i)=qfs.at(i).get_parameter();
+      std::cout<<"mismatch:"<<qfs.at(i).mismatch()<<std::endl;
    }
+   exit(0);
    std::stack<std::tuple<size_t,size_t> > stack;//2nd is ref-index of 1st(k)
    stack.push({idx_grid_point_init,idx_grid_point_init});
    K.clear();
@@ -337,7 +353,7 @@ std::tuple<double,double> solve
 {
    const double& a = std::get<0>(beta);
    const double  b = std::get<1>(beta)-1; 
-   const double& c = std::get<2>(beta);
+   const double& c = std::get<2>(beta)-1;
    const double root = std::sqrt(b*b-4*a*c);
    return 
    {
