@@ -30,13 +30,15 @@ In the discretization, overlaps and gaps of cones occur.
 The property that the actual cell and the discretized cell coincide with each other as the number of divisions increases is the same as when using [the cubic voxel](https://en.wikipedia.org/wiki/Voxel).
 The compressibility of information is higher when using a cone.
 
-![bubbling](docs/fig/discretization.jpeg)
+![discretization](docs/fig/discretization.jpeg)
 
 Our algorithm requires a grid to determine the direction of the cone.
 The grid points are distributed almost uniformly on the spherical surface.
 In addition, all of the grid points are tethered to create a closed network, in order to speed up the calculation that determines the length of the vector extending from ![Pk](docs/fig/Pk.svg) to the bottom of each cone.
 The grid point is managed as ![theta_phi](docs/fig/theta_phi.svg), which are same with angular coordinates in the spherical coordinate system.
 The length between ![Pk](docs/fig/Pk.svg) and the center of the bottom of the cone is a function of ![theta_phi](docs/fig/theta_phi.svg), ![u_func](docs/fig/u_func.svg).
+
+![graph](docs/fig/graph.gif)
 
 ### Outline of Tesselation Procedure
 #### 1. Find minimum ![uk](docs/fig/uk.svg)
