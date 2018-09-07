@@ -36,18 +36,18 @@ Our algorithm requires a grid to determine the direction of the cone.
 The grid points are distributed almost uniformly on the spherical surface.
 In addition, all of the grid points are tethered to create a closed network, in order to speed up the calculation that determines the length of the vector extending from ![Pk](docs/fig/Pk.svg) to the bottom of each cone.
 The grid point is managed as ![theta_phi](docs/fig/theta_phi.svg), which are same with angular coordinates in the spherical coordinate system.
-The length between ![Pk](docs/fig/Pk.svg) and the center of bottom of cone is a function of ![theta_phi](docs/fig/theta_phi.svg), ![u_func](docs/fig/u_func.svg).
+The length between ![Pk](docs/fig/Pk.svg) and the center of the bottom of the cone is a function of ![theta_phi](docs/fig/theta_phi.svg), ![u_func](docs/fig/u_func.svg).
 
 ### Outline of Tesselation Procedure
 #### 1. Find minimum ![uk](docs/fig/uk.svg)
-- The minimum ![uk](docs/fig/uk.svg) is approximately equal to half of the distance to ![Pj](docs/fig/Pj.svg) closest to ![Pj](docs/fig/Pj.svg). Also, the direction ![theta_phi](docs/fig/theta_phi.svg) is direction to ![Pj](docs/fig/Pj.svg).
+- The minimum ![uk](docs/fig/uk.svg) is approximately equal to half of the distance to ![Pj](docs/fig/Pj.svg) closest to ![Pj](docs/fig/Pj.svg). Also, the direction ![theta_phi](docs/fig/theta_phi.svg) is a direction to ![Pj](docs/fig/Pj.svg).
 
 #### 2. Solve the others ![u_func](docs/fig/u_func.svg)
 
 - Reference values for a time-optimization:
 
     - ![u_func_dash](docs/fig/u_func_dash.svg) : u for the neighbor of ![theta_phi](docs/fig/theta_phi.svg)
-    - ![betaset_dash](docs/fig/betaset_dash.svg) : the set of parameter beta of distance function for each ![P](docs/fig/P.svg) and ![theta_phi_dash](docs/fig/theta_phi_dash.svg) direction
+    - ![betaset_dash](docs/fig/betaset_dash.svg) : the set of parameter beta of the distance function for each ![P](docs/fig/P.svg) and ![theta_phi_dash](docs/fig/theta_phi_dash.svg) direction
 - Solve recursively
 	1. Pop ![theta_phi](docs/fig/theta_phi.svg) from the stack
     2. If ![u_func](docs/fig/u_func.svg) is already solved, pop again
@@ -58,7 +58,7 @@ The length between ![Pk](docs/fig/Pk.svg) and the center of bottom of cone is a 
     6. Stock the parameters of distance function as ![u_func_dash](docs/fig/u_func_dash.svg)
         - When ![theta_phi](docs/fig/theta_phi.svg) taken out from the stack, the stocked parameters are a parameters of distance function for neighbor of ![theta_phi](docs/fig/theta_phi.svg)
 
-<img src="docs/fig/cross_point.png" width="600px">
+<img src="docs/fig/cross_point.jpg" width="600px">
 
 #### Remarks
 1. If ![u_func](docs/fig/u_func.svg) is negative or infinite, the ![Rk](docs/fig/Rk_simple.svg) is open
