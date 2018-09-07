@@ -119,16 +119,41 @@ void Quadratic_function::set(const size_t& index_grid_point, Vector3D base, cons
          sin_thteta*sin_phi,
          cos_thteta
       );
-   //2. sampling distance with constant +u (= unit length)
-   for(size_t s=0;s<N_SAMPLING_CURVE;++s)
+   ////2. sampling distance with constant +u (= unit length)
+   //for(size_t s=0;s<N_SAMPLING_CURVE;++s)
+   //{
+   //   //base+=direction;
+   //   xs.at(s)=static_cast<int>(s);
+   //   ys.at(s)=(base-neighbor).norm();
+   //   base+=direction;
+   //}
+   int x=0;
+   int counter=0;
+   bool f=false;
+   double current_y = (base-neighbor).norm();
+   do
    {
-      //base+=direction;
-      xs.at(s)=static_cast<int>(s);
-      ys.at(s)=(base-neighbor).norm();
-      base+=direction;
-   }
+      base-=direction;
+      --x;
+      const double y = (base-neighbor).norm();
+      //std::cout<<x<<" "<<y<<std::endl;
+      if(f)
+      {
+      std::cout<<x<<" "<<y<<std::endl;
+         xs.at(counter)=x;
+         ys.at(counter)=y;   
+         ++counter;
+      }
+      else
+      {
+         f=((current_y-y)<=0.0)?true:false;
+      }
+      current_y=y;
+   }while(counter!=N_SAMPLING_CURVE);
    //3. get beta
    LM();
+   //std::cout<<std::get<0>(beta)<<" "<<std::get<1>(beta)<<" "<<std::get<2>(beta)<<std::endl;
+   //std::cout<<"mismatch:"<<mismatch()<<std::endl;
 }
 
 void Quadratic_function::add(const std::tuple<u_<double>,d_<double> >& pnt)
@@ -156,12 +181,13 @@ double Quadratic_function::mismatch()const
    double sum_sqr_error=0.0;
    for(size_t i=0,size=xs.size();i<size;++i)
    {
-      sum_sqr_error+=sqr(ys.at(i)-std::get<0>(beta)*sqr(xs.at(i))+std::get<1>(beta)*xs.at(i)+std::get<2>(beta));
-    //  std::cout<<xs.at(i)<<" "<<ys.at(i)<<std::endl;
+      sum_sqr_error+=
+      std::pow
+      (
+         ys.at(i)-(std::get<0>(beta)*sqr(xs.at(i))+std::get<1>(beta)*xs.at(i)+std::get<2>(beta)),2
+      );
    }
-   std::cout<<std::get<0>(beta)<<" "<<std::get<1>(beta)<<" "<<std::get<2>(beta)<<std::endl;
-   //exit(0);
-   return std::sqrt(sum_sqr_error/((int)(xs.size())));
+   return std::sqrt(sum_sqr_error/(int)(xs.size()));
 }
 
 std::set<k_<size_t> > Voronoi_cell::get_neighbor()const
@@ -191,6 +217,7 @@ Voronoi_cell::Voronoi_cell(const k_<size_t>& i, std::vector<Vector3D> const * ps
    {
       std::cout<<i_<<" u: "<<u.at(i_).value()<<std::endl;
    }
+   exit(0);
 }
 
 void Voronoi_cell::change_pointer(std::vector<Vector3D> const * ps)
@@ -283,9 +310,7 @@ void Voronoi_cell::boundary_fitting()
    {
       qfs.at(i).set(idx_grid_point_init,ps.at(k.value()),ps.at(i));
       ref_beta.at(i)=qfs.at(i).get_parameter();
-      std::cout<<"mismatch:"<<qfs.at(i).mismatch()<<std::endl;
    }
-   exit(0);
    std::stack<std::tuple<size_t,size_t> > stack;//2nd is ref-index of 1st(k)
    stack.push({idx_grid_point_init,idx_grid_point_init});
    K.clear();
@@ -293,8 +318,7 @@ void Voronoi_cell::boundary_fitting()
    {
       const auto [top,idx_ref_u] = stack.top(); stack.pop();
       filled[top]=true;
-      //std::cout<<"top: "<<top<<std::endl;
-      if(top!=idx_grid_point_init && DBL_MAX!=u.at(top).value()){continue;}//In this case, u(pos) is calculated-grid-point.
+      //if(top!=idx_grid_point_init && DBL_MAX!=u.at(top).value()){continue;}//In this case, u(pos) is calculated-grid-point.
       for(size_t i=0,size=ps.size();i<size;++i)//estimation of distance function for each k
       {
          qfs.at(i).set(top,ps.at(k.value()),ps.at(i),ref_beta.at(i));
@@ -304,12 +328,12 @@ void Voronoi_cell::boundary_fitting()
          ref_beta.at(i)=qfs.at(i).get_parameter();
       }
       //find min(positive u)
-      //const std::tuple<double,double,double>& beta_i = ref_beta.at(k.value());
       double min(DBL_MAX);//positive, and 0.5*min_distance<=
       size_t k_neighbor = std::numeric_limits<std::size_t>::max();
       for(size_t j=0,size=ps.size();j<size;++j)
       {
          if(k.value()==j){continue;}
+         std::cout<<"j:"<<j<<" ";
          const auto [alpha,bravo] = solve(ref_beta.at(j));
          if((alpha>=0.0) && min>alpha)
          {
@@ -353,8 +377,11 @@ std::tuple<double,double> solve
 {
    const double& a = std::get<0>(beta);
    const double  b = std::get<1>(beta)-1; 
-   const double& c = std::get<2>(beta)-1;
+   const double& c = std::get<2>(beta);
    const double root = std::sqrt(b*b-4*a*c);
+   std::cout<<"solv:"
+      << -(root+b)/(2*a)<<" "
+      << +(root-b)/(2*a)<<" "<<a<<" "<<b<<" "<<c<<std::endl;
    return 
    {
       -(root+b)/(2*a),
