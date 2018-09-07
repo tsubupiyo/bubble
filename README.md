@@ -6,29 +6,22 @@
 # bubble
 3-Dimensional Voronoi Diagram Divided by Cones.
 
-## Definition of Voronoi Diagram
-In a metric space ![X](docs/fig/X.svg), [the Voronoi diagram](https://en.wikipedia.org/wiki/Voronoi_diagram) associated with a set of subset ![P](docs/fig/P.svg) is defined as the set of 
-![Rk](docs/fig/Rk.svg).
+## General Definition of Voronoi Diagram
 
-In our calculation, the distance function is Euclidean.
+In a metric space ![X](docs/fig/X.svg), the Voronoi diagram for a set of subset ![P](docs/fig/P.svg) is defined as the set of ![Rk](docs/fig/Rk.svg).
 
 ## Starting Point
-Although bubbling is the elegant algorithm, the data structure and algorithm are complex and heavy.  However, contacted bubbles hinted starting point of an algorithm described later.
-
-![bubbling](docs/fig/Voronoi_growth_euclidean.gif)
+When regions expand from each point until contact with other regions,  it is equal to the Voronoi Diagram. This nature gives hints useful in calculating Voronoi diagrams. I thought that it would be possible to shorten the computation time by mimicking the style in which the boundary surfaces of each Voronoi cell are determined continuously from one point. 
+<img src="docs/fig/Voronoi_growth_euclidean.gif" width="300px">
 
 
 ## Algorithm
-Our approach accepts a partial reconstruction.
-Maybe a novel approach. 
-Please [contact us](https://github.com/toyaku-phys/bubble/issues) if you know a similar one.
+Maybe this is a novel approach. 
+Please [contact me](https://github.com/toyaku-phys/bubble/issues) if you know a similar one.
 
 ### Discretization and Data Structure
-Voronoi cells are represented as a set of cones in our discretization.
-The center of the bottom of each cone is adjusted to match the boundary of the cell.
-In the discretization, overlaps and gaps of cones occur.
-The property that the actual cell and the discretized cell coincide with each other as the number of divisions increases is the same as when using [the cubic voxel](https://en.wikipedia.org/wiki/Voxel).
-The compressibility of information is higher when using a cone.
+To discretize the Voronoi cell, I  employed a set of cones which have different size.  The tip of each cone is equal to Pk, and the center of the bottom face coincides with the boundary surface.
+A mismatch such as a volume and surface area becomes smaller when the number of cones is much. This property is similar to a discretization using [the cubic voxel](https://en.wikipedia.org/wiki/Voxel).
 
 ![discretization](docs/fig/discretization.jpeg)
 
