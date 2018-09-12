@@ -20,8 +20,10 @@ NP_MAKE_NAMED_PARAMETER(u);//amplitude
 NP_MAKE_NAMED_PARAMETER(k);//index of element of P
 NP_MAKE_NAMED_PARAMETER(d);//distance between two points
 
+typedef std::tuple<double,double,double> Beta;
+
 constexpr size_t N_GRID_POINTS= 50;
-constexpr size_t N_SAMPLING_CURVE = 10;
+constexpr size_t N_SAMPLING_CURVE = 5;
 #include "grid.hpp"
 
 bool operator<(const k_<size_t>& a, const k_<size_t>& b)
@@ -35,12 +37,12 @@ std::vector<std::list<size_t>> network = get_network(grid_points);
 class Quadratic_function
 {  //y = a*x*x + b*x + c
    public:
-      std::tuple<double,double,double> beta;//a,b,c
+      Beta beta;//a,b,c
       Quadratic_function();
       Quadratic_function(const double& a_, const double& b_, const double& c_);
-      void set(const size_t& index_grid_point, Vector3D base, const Vector3D& neighbor, const std::tuple<double,double,double>& ref_beta=std::tuple<double,double,double>(0,0,0));
+      void set(const size_t& index_grid_point, Vector3D base, const Vector3D& neighbor, const Beta& ref_beta=Beta(0,0,0), bool sign_plus=false);
       void add(const std::tuple<u_<double>,d_<double> >& pnt);
-      const std::tuple<double,double,double>& get_parameter()const; 
+      const Beta& get_parameter()const; 
    private:
       void LM();
       std::vector<double> ys;
@@ -50,7 +52,7 @@ class Quadratic_function
       double mismatch()const;
 };
 
-std::tuple<double,double> solve(const std::tuple<double,double,double>& beta);
+std::tuple<double,double> solve(const Beta& beta);
 
 class Voronoi_cell
 {
@@ -68,7 +70,7 @@ class Voronoi_cell
    private:
    void boundary_fitting();//to determine the cell, fit u to the boundary.
    std::vector<Quadratic_function> qfs;
-   std::vector<std::tuple<double,double,double> > ref_beta;
+   std::vector<Beta> ref_beta;
 };
 
 class Voronoi_diagram
@@ -101,7 +103,14 @@ Quadratic_function::Quadratic_function(const double& a_, const double& b_, const
    ys.resize(N_SAMPLING_CURVE);
 }
 
-void Quadratic_function::set(const size_t& index_grid_point, Vector3D base, const Vector3D& neighbor, const std::tuple<double,double,double>& ref_beta)
+void Quadratic_function::set
+(
+   const size_t&   index_grid_point,
+   Vector3D        base,
+   const Vector3D& neighbor,
+   const Beta&     ref_beta,
+   bool sign_plus
+)
 {
    f_useable=false;
    beta=ref_beta;
@@ -119,25 +128,17 @@ void Quadratic_function::set(const size_t& index_grid_point, Vector3D base, cons
          sin_thteta*sin_phi,
          cos_thteta
       );
-   ////2. sampling distance with constant +u (= unit length)
-   //for(size_t s=0;s<N_SAMPLING_CURVE;++s)
-   //{
-   //   //base+=direction;
-   //   xs.at(s)=static_cast<int>(s);
-   //   ys.at(s)=(base-neighbor).norm();
-   //   base+=direction;
-   //}
+   ////2. sampling distance with constant u (= unit length)
    int x=0;
    int counter=0;
-   bool f=false;
+   bool f_sampling=false;
    double current_y = (base-neighbor).norm();
    do
    {
       base-=direction;
-      --x;
+      (sign_plus)?(++x):(--x);
       const double y = (base-neighbor).norm();
-      //std::cout<<x<<" "<<y<<std::endl;
-      if(f)
+      if(f_sampling)
       {
       std::cout<<x<<" "<<y<<std::endl;
          xs.at(counter)=x;
@@ -146,14 +147,18 @@ void Quadratic_function::set(const size_t& index_grid_point, Vector3D base, cons
       }
       else
       {
-         f=((current_y-y)<=0.0)?true:false;
+         if(sign_plus)
+         {
+            f_sampling=((current_y-y)<=0.0)?true:false;
+         }else
+         {
+            f_sampling=((current_y-y)>=0.0)?true:false;
+         }
       }
       current_y=y;
    }while(counter!=N_SAMPLING_CURVE);
    //3. get beta
    LM();
-   //std::cout<<std::get<0>(beta)<<" "<<std::get<1>(beta)<<" "<<std::get<2>(beta)<<std::endl;
-   //std::cout<<"mismatch:"<<mismatch()<<std::endl;
 }
 
 void Quadratic_function::add(const std::tuple<u_<double>,d_<double> >& pnt)
@@ -163,7 +168,7 @@ void Quadratic_function::add(const std::tuple<u_<double>,d_<double> >& pnt)
    f_useable=false;
 }
 
-const std::tuple<double,double,double>& Quadratic_function::get_parameter()const
+const Beta& Quadratic_function::get_parameter()const
 {
    assert(f_useable);
    return beta;
@@ -372,7 +377,7 @@ void Voronoi_diagram::change_pointer(std::vector<Vector3D> const * ps)
 
 std::tuple<double,double> solve
 (
-   const std::tuple<double,double,double>& beta
+   const Beta& beta
 )
 {
    const double& a = std::get<0>(beta);
