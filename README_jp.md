@@ -25,6 +25,7 @@
 この性質はボロノイ図を計算する際のヒントになった。
 我々は、それぞれのボロノイ細胞を隔てる境界面は１点から連続的に決まってゆくという流れを模倣することで、
 ボロノイ図の計算時間を短縮できるのではないかと考えた。
+
 <img src="docs/fig/Voronoi_growth_euclidean.gif" width="300px">
 
 ### ボロノイ細胞の離散化
@@ -35,6 +36,7 @@
 この性質は[立方体のボクセル](https://en.wikipedia.org/wiki/Voxel)を用いて表現した場合と同様である。
 この離散化において、それぞれの円錐は、
 先端から底面の中心に向かう単位方向ベクトル r と先端と底面の距離 u のみで表すことができる。
+
 ![discretization](docs/fig/discretization.jpeg)
 
 ### 高速な境界面の算出のための最小全域木
@@ -44,10 +46,11 @@
 この木に沿って各頂点に対応するuの計算を行うことで、ボロノイ細胞の境界を算出する。このとき、前頂点の計算に使用した距離関数とuを次の計算の初期値として用いることで、反復計算の回数の削減を狙える。
 この計算の起点はPkに最も近い母点に最も近い頂点である。
 最小全域木を採用した理由は、再帰的なuの計算をする際に余計な呼び出しを引き起こすループ構造を含まないためである。
+
 ![graph](docs/fig/graph.gif)
 
-### Outline of Tesselation Procedure
-#### 1. Find minimum ![uk](docs/fig/uk.svg)
+### アルゴリズム
+#### 1. 最小の![uk](docs/fig/uk.svg)の検索
 - The minimum ![uk](docs/fig/uk.svg) is approximately equal to half of the distance to ![Pj](docs/fig/Pj.svg) closest to ![Pj](docs/fig/Pj.svg). Also, the direction ![theta_phi](docs/fig/theta_phi.svg) is a direction to ![Pj](docs/fig/Pj.svg).
 
 #### 2. Solve the others ![u_func](docs/fig/u_func.svg)
