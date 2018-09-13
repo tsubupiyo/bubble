@@ -4,12 +4,12 @@
 
 
 # bubble
-3-Dimensional Voronoi Diagram Divided by Cones.
+円錐型ボクセル表現した三次元ボロノイ図
 
 ##Outline:
-- Introduction
-- Discretization for Voronoi cell
-- Graph for Fast Boundary Fitting
+- 序論
+- ボロノイ細胞の離散化
+- 高速な境界面の算出のための最小全域木
 - Tesselation Procedure
 - Contribution
 - Submodules
@@ -17,26 +17,31 @@
 - Authors
 - License
 
-## General Definition of Voronoi Diagram
-In a metric space ![X](docs/fig/X.svg), a Voronoi diagram for a set of subset ![P](docs/fig/P.svg) is defined as the set of ![Rk](docs/fig/Rk.svg).
+## 一般的なボロノイ図の定義
+距離空間![X](docs/fig/X.svg)において、部分集合![P](docs/fig/P.svg)についてのボロノイ図はボロノイ細胞![Rk](docs/fig/Rk.svg)の集合として定義される。
 
-## Starting Point
-When regions expand from each point until contact with other regions,  it is equal to the Voronoi Diagram. This nature gives hints useful in calculating the Voronoi diagram. 
-I thought that it would be possible to shorten the computation time by mimicking the style in which the boundary surfaces of each Voronoi cell are determined continuously from a point. 
+## 着想
+散らばった点それぞれから領域を接触するまで拡張して生じた領域はボロノイ図に等しい。
+この性質はボロノイ図を計算する際のヒントになった。
+我々は、それぞれのボロノイ細胞を隔てる境界面は１点から連続的に決まってゆくという流れを模倣することで、
+ボロノイ図の計算時間を短縮できるのではないかと考えた。
 <img src="docs/fig/Voronoi_growth_euclidean.gif" width="300px">
 
-### Discretization for Voronoi Cell
-To discretize the Voronoi cell, we employed a set of cones which have different sizes. 
-The tip of each cone is equal to Pk, and a center of the bottom face coincides with the boundary surface.
-A solid angle at the tip of the cone is defined by a number of the cones in each Voronoi cell.
-A mismatch such as a volume and surface area between actual Voronoi cell and discretized Voronoi cell becomes smaller when the number of cones is much.
-This property is similar to a discretization using [a cubic voxel](https://en.wikipedia.org/wiki/Voxel).
-In this discretization, each cone can be represented only by a unit direction vector r from the vertex to the center of the bottom face and a distance from the vertex to the center of the bottom face u.
+### ボロノイ細胞の離散化
+ボロノイ細胞を離散化するために、我々は大きさの異なる円錐を利用する。
+円錐の先端はPkに等しく、底面の中心点は境界面に含まれる。
+また、円錐の先端の立体角はそれぞれのボロノイ細胞における円錐の数に応じて設定する。
+実際のボロノイ細胞と離散化したボロノイ細胞の体積や表面積などの不一致は、円錐の数を多くするに従って減少する。
+この性質は[立方体のボクセル](https://en.wikipedia.org/wiki/Voxel)を用いて表現した場合と同様である。
+この離散化において、それぞれの円錐は、
+先端から底面の中心に向かう単位方向ベクトル r と先端と底面の距離 u のみで表すことができる。
 ![discretization](docs/fig/discretization.jpeg)
 
-### Graph for Fast Boundary Fitting
-
-
+### 高速な境界面の算出のための最小全域木
+円錐を表すための単位方向ベクトルを得るために、まず単位球面上に点を配置した。
+均一な配置を得るために点の間に斥力を考慮し、焼きなまし法を用いた配置の最適化を行った。
+そして、これらの点を頂点とする最小全域木を得た。
+この木に沿って各頂点に対応するuの計算を行うことで、ボロノイ細胞の境界を決定していく。前頂点の計算に使用した距離関数とuを次の計算の初期値として用いることで、反復計算の回数の削減を狙う。
 ![graph](docs/fig/graph.gif)
 
 ### Outline of Tesselation Procedure
