@@ -10,7 +10,7 @@
 - 序論
 - ボロノイ細胞の離散化
 - 高速な境界面の算出のための最小全域木
-- Tesselation Procedure
+- ボロノイ細胞を算出するためのアルゴリズム
 - Contribution
 - Submodules
 - Versioning
@@ -65,7 +65,7 @@
 離散化が十分に細かく行われているならば、これの大きさは![Pk](docs/fig/Pk.svg)とそれにもっとも近い他の母点![Pj](docs/fig/Pj.svg)との距離の半分にほぼ等しいだろう。
 
 #### 2. 木を辿ってすべての![u_func](docs/fig/u_func.svg)を算出する
-1. U を最大値で初期化
+1. U を最大値で初期化, Fを偽で初期化
 2. S に (theta0,phi0) に対応する頂点のインデックスをプッシュ
 3. (theta0,phi0)についてDを計算([LM法](https://en.wikipedia.org/wiki/Levenberg–Marquardt_algorithm))
 4. S からインデックスをポップ(i)
@@ -76,6 +76,7 @@
 9. Sが空でなければ4に戻る
 
 注意:
+
 - u が最終的に最大値のままならばボロノイ細胞はその方向に開いている
 
 <img src="docs/fig/cross_point.jpg" width="600px">
