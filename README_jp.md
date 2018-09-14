@@ -49,33 +49,36 @@
 
 ![graph](docs/fig/graph.gif)
 
-### アルゴリズム
-#### 1. 最小の![uk](docs/fig/uk.svg)の検索
-- The minimum ![uk](docs/fig/uk.svg) is approximately equal to half of the distance to ![Pj](docs/fig/Pj.svg) closest to ![Pj](docs/fig/Pj.svg). Also, the direction ![theta_phi](docs/fig/theta_phi.svg) is a direction to ![Pj](docs/fig/Pj.svg).
+### ボロノイ細胞を算出するためのアルゴリズム
+#### 0. 変数の名前
 
-#### 2. Solve the others ![u_func](docs/fig/u_func.svg)
+- P: 母点の集合
+- Pk: 算出するボロノイ細胞に対応する母点
+- S: 頂点のインデックスのスタック
+- U: uの配列
+- D: 全ての母点とPkの距離函数の配列(具体的には函数のパラメータの配列)
+- F: 真偽値の配列
 
-- Reference values for a time-optimization:
 
-    - ![u_func_dash](docs/fig/u_func_dash.svg) : u for the neighbor of ![theta_phi](docs/fig/theta_phi.svg)
-    - ![betaset_dash](docs/fig/betaset_dash.svg) : the set of parameter beta of the distance function for each ![P](docs/fig/P.svg) and ![theta_phi_dash](docs/fig/theta_phi_dash.svg) direction
-- Solve recursively
-	1. Pop ![theta_phi](docs/fig/theta_phi.svg) from the stack
-    2. If ![u_func](docs/fig/u_func.svg) is already solved, pop again
-    	- When the stack size is zero, procedure is terminated
-    3. Solve the distance functions (the initial parameter sets is set to ![betaset_dash](docs/fig/betaset_dash.svg) )
-    4. Solve the first cross point of the distance functions (the inital cross point is set to ![u_func_dash](docs/fig/u_func_dash.svg) )
-    5. Stack neighbor grid points of ![theta_phi](docs/fig/theta_phi.svg) using the network of grid points
-    6. Stock the parameters of distance function as ![u_func_dash](docs/fig/u_func_dash.svg)
-        - When ![theta_phi](docs/fig/theta_phi.svg) taken out from the stack, the stocked parameters are a parameters of distance function for neighbor of ![theta_phi](docs/fig/theta_phi.svg)
+#### 1. 離散化ボロノイ細胞を構成する円錐のうちもっとも小さい円錐を探す
+もっとも小さい円錐は最小の ![uk](docs/fig/uk.svg) をもつ。
+離散化が十分に細かく行われているならば、これの大きさは![Pk](docs/fig/Pk.svg)とそれにもっとも近い他の母点![Pj](docs/fig/Pj.svg)との距離の半分にほぼ等しいだろう。
+
+#### 2. 木を辿ってすべての![u_func](docs/fig/u_func.svg)を算出する
+1. U を最大値で初期化
+2. S に (theta0,phi0) に対応する頂点のインデックスをプッシュ
+3. (theta0,phi0)についてDを計算([LM法](https://en.wikipedia.org/wiki/Levenberg–Marquardt_algorithm))
+4. S からインデックスをポップ(i)
+5. iに対応する頂点(theta,phi)を取得し、既存のDをもとに(theta,phi)に対応するDを算出
+6. 母点に対応する距離函数と他の母点に対応する距離函数が交わるuのうち、正の範囲における最小のuとしてu(theta,phi)を算出
+7. Fのi番目を真にする
+8. 木をもとに、頂点iの隣接を参照したのち、その隣接頂点に対応するFの内容を参照し、それが偽であったのなら隣接頂点のインデックスをSにプッシュ
+9. Sが空でなければ4に戻る
+
+注意:
+- u が最終的に最大値のままならばボロノイ細胞はその方向に開いている
 
 <img src="docs/fig/cross_point.jpg" width="600px">
-
-#### Remarks
-1. If ![u_func](docs/fig/u_func.svg) is negative or infinite, the ![Rk](docs/fig/Rk_simple.svg) is open
-    
-2. The parameters of the distance function are calculated using [the Levenberg–Marquardt algorithm](https://en.wikipedia.org/wiki/Levenberg–Marquardt_algorithm)
-
 
 ## Contribution
 [Pull Request](https://github.com/toyaku-phys/bubble/pulls)
