@@ -6,48 +6,49 @@
 # bubble
 3-Dimensional Voronoi Diagram Divided by Cones.
 
-## Definition of Voronoi Diagram
-In a metric space ![X](docs/fig/X.svg), [the Voronoi diagram](https://en.wikipedia.org/wiki/Voronoi_diagram) associated with a set of subset ![P](docs/fig/P.svg) is defined as the set of 
-![Rk](docs/fig/Rk.svg).
+##Outline:
+- Introduction
+- Discretization for Voronoi cell
+- Graph for Fast Boundary Fitting
+- Tesselation Procedure
+- Contribution
+- Submodules
+- Versioning
+- Authors
+- License
 
-In our calculation, the distance function is Euclidean.
+## General Definition of Voronoi Diagram
+In a metric space ![X](docs/fig/X.svg), a Voronoi diagram for a set of subset ![P](docs/fig/P.svg) is defined as the set of ![Rk](docs/fig/Rk.svg).
 
 ## Starting Point
-Although bubbling is the elegant algorithm, the data structure and algorithm are complex and heavy.  However, contacted bubbles hinted starting point of an algorithm described later.
+When regions expand from each point until contact with other regions,  it is equal to the Voronoi Diagram. This nature gives hints useful in calculating the Voronoi diagram. 
+I thought that it would be possible to shorten the computation time by mimicking the style in which the boundary surfaces of each Voronoi cell are determined continuously from a point. 
+<img src="docs/fig/Voronoi_growth_euclidean.gif" width="300px">
 
-![bubbling](docs/fig/Voronoi_growth_euclidean.gif)
+### Discretization for Voronoi Cell
+To discretize the Voronoi cell, we employed a set of cones which have different sizes. 
+The tip of each cone is equal to Pk, and a center of the bottom face coincides with the boundary surface.
+A solid angle at the tip of the cone is defined by a number of the cones in each Voronoi cell.
+A mismatch such as a volume and surface area between actual Voronoi cell and discretized Voronoi cell becomes smaller when the number of cones is much.
+This property is similar to a discretization using [a cubic voxel](https://en.wikipedia.org/wiki/Voxel).
+In this discretization, each cone can be represented only by a unit direction vector r from the vertex to the center of the bottom face and a distance from the vertex to the center of the bottom face u.
+![discretization](docs/fig/discretization.jpeg)
+
+### Graph for Fast Boundary Fitting
 
 
-## Algorithm
-Our approach accepts a partial reconstruction.
-Maybe a novel approach. 
-Please [contact us](https://github.com/toyaku-phys/bubble/issues) if you know a similar one.
-
-### Discretization and Data Structure
-Voronoi cells are represented as a set of cones in our discretization.
-The center of the bottom of each cone is adjusted to match the boundary of the cell.
-In the discretization, overlaps and gaps of cones occur.
-The property that the actual cell and the discretized cell coincide with each other as the number of divisions increases is the same as when using [the cubic voxel](https://en.wikipedia.org/wiki/Voxel).
-The compressibility of information is higher when using a cone.
-
-![bubbling](docs/fig/discretization.jpeg)
-
-Our algorithm requires a grid to determine the direction of the cone.
-The grid points are distributed almost uniformly on the spherical surface.
-In addition, all of the grid points are tethered to create a closed network, in order to speed up the calculation that determines the length of the vector extending from ![Pk](docs/fig/Pk.svg) to the bottom of each cone.
-The grid point is managed as ![theta_phi](docs/fig/theta_phi.svg), which are same with angular coordinates in the spherical coordinate system.
-The length between ![Pk](docs/fig/Pk.svg) and the center of bottom of cone is a function of ![theta_phi](docs/fig/theta_phi.svg), ![u_func](docs/fig/u_func.svg).
+![graph](docs/fig/graph.gif)
 
 ### Outline of Tesselation Procedure
 #### 1. Find minimum ![uk](docs/fig/uk.svg)
-- The minimum ![uk](docs/fig/uk.svg) is approximately equal to half of the distance to ![Pj](docs/fig/Pj.svg) closest to ![Pj](docs/fig/Pj.svg). Also, the direction ![theta_phi](docs/fig/theta_phi.svg) is direction to ![Pj](docs/fig/Pj.svg).
+- The minimum ![uk](docs/fig/uk.svg) is approximately equal to half of the distance to ![Pj](docs/fig/Pj.svg) closest to ![Pj](docs/fig/Pj.svg). Also, the direction ![theta_phi](docs/fig/theta_phi.svg) is a direction to ![Pj](docs/fig/Pj.svg).
 
 #### 2. Solve the others ![u_func](docs/fig/u_func.svg)
 
 - Reference values for a time-optimization:
 
     - ![u_func_dash](docs/fig/u_func_dash.svg) : u for the neighbor of ![theta_phi](docs/fig/theta_phi.svg)
-    - ![betaset_dash](docs/fig/betaset_dash.svg) : the set of parameter beta of distance function for each ![P](docs/fig/P.svg) and ![theta_phi_dash](docs/fig/theta_phi_dash.svg) direction
+    - ![betaset_dash](docs/fig/betaset_dash.svg) : the set of parameter beta of the distance function for each ![P](docs/fig/P.svg) and ![theta_phi_dash](docs/fig/theta_phi_dash.svg) direction
 - Solve recursively
 	1. Pop ![theta_phi](docs/fig/theta_phi.svg) from the stack
     2. If ![u_func](docs/fig/u_func.svg) is already solved, pop again
@@ -58,7 +59,7 @@ The length between ![Pk](docs/fig/Pk.svg) and the center of bottom of cone is a 
     6. Stock the parameters of distance function as ![u_func_dash](docs/fig/u_func_dash.svg)
         - When ![theta_phi](docs/fig/theta_phi.svg) taken out from the stack, the stocked parameters are a parameters of distance function for neighbor of ![theta_phi](docs/fig/theta_phi.svg)
 
-<img src="docs/fig/cross_point.png" width="600px">
+<img src="docs/fig/cross_point.jpg" width="600px">
 
 #### Remarks
 1. If ![u_func](docs/fig/u_func.svg) is negative or infinite, the ![Rk](docs/fig/Rk_simple.svg) is open
