@@ -3,19 +3,21 @@
 [![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
 
 
-# bubble
+# bubble [unstable]
 円錐型ボクセル表現した三次元ボロノイ図
 
 ## 概要
-- [序論](README_jp.md#一般的なボロノイ図の定義)
-- [ボロノイ細胞の離散化](README_jp.md#ボロノイ細胞の離散化)
-- [高速な境界面の算出のための最小全域木](README_jp.md#高速な境界面の算出のための最小全域木)
-- [ボロノイ細胞を算出するためのアルゴリズム](README_jp.md#ボロノイ細胞を算出するためのアルゴリズム)
-- Contribution
-- Submodules
-- Versioning
-- Authors
-- License
+
+1. [序論](README_jp.md#一般的なボロノイ図の定義)
+2. [ボロノイ細胞の離散化](README_jp.md#ボロノイ細胞の離散化)
+3. [高速な境界面の算出のための最小全域木](README_jp.md#高速な境界面の算出のための最小全域木)
+4. [距離函数の取り扱い](README_jp.md#距離函数の取り扱い)
+5. [ボロノイ細胞を算出するためのアルゴリズム](README_jp.md#ボロノイ細胞を算出するためのアルゴリズム)
+6. [寄与](README_jp.md#寄与)
+7. [サブモジュールの一覧](README_jp.md#サブモジュールの一覧)
+8. [バージョニング](README_jp.md#バージョニング)
+9. [著者](README_jp.md#著者)
+10. [ライセンス](README_jp.md#ライセンス)
 
 ## 一般的なボロノイ図の定義
 距離空間![X](docs/fig/X.svg)において、部分集合![P](docs/fig/P.svg)についてのボロノイ図はボロノイ細胞![Rk](docs/fig/Rk.svg)の集合として定義される。
@@ -49,7 +51,19 @@
 
 ![graph](docs/fig/graph.gif)
 
+### 距離函数の取り扱い
+ここでの距離函数は一般的な距離函数と異なり、ある直線 L= uD+Pkと点Piの距離をuの関数として表したものを指す。
+これは、Pk=Piならばuに比例した形をとる。そして、PiがL上にない時、２次関数の形になる(Pが点であるとき)。
+PiがL上にあるとき、１次関数を組み合わせたようなV字となる。
+
+この性質のために、単純にパラメータセットとして距離函数を保持することはできない。
+アルゴリズムの内容から、傾きが負である領域についての部分と、どこまで傾きが負であるのか分かるようにしておけば問題なく境界面を解くために利用できる。
+
+
+<img src="docs/fig/cross_point.jpg" width="600px">
+
 ### ボロノイ細胞を算出するためのアルゴリズム
+
 #### 0. 変数の名前
 
 - P: 母点の集合
@@ -79,34 +93,33 @@
 
 - u が最終的に最大値のままならばボロノイ細胞はその方向に開いている
 
-<img src="docs/fig/cross_point.jpg" width="600px">
 
-## Contribution
+
+## 寄与
 [Pull Request](https://github.com/toyaku-phys/bubble/pulls)
 
-1. Fork it ( https://github.com/toyaku-phys/bubble/fork )
-2. Create your feature branch (git checkout -b my-new-feature)
-3. Commit your changes (git commit -am 'Add some feature')
-4. Push to the branch (git push origin my-new-feature)
-5. Create a new Pull Request to the bubble/master branch
+1. フォーク( https://github.com/toyaku-phys/bubble/fork )
+2. 新しい拡張のためのブランチを作成 (git checkout -b my-new-feature)
+3. 変更をコミット (git commit -am 'Add some feature')
+4. 作成したブランチにプッシュ (git push origin my-new-feature)
+5. bubble/master ブランチにプルリクエスト
 
 [Issue](https://github.com/toyaku-phys/bubble/issues)
 
-1. Write your new feature or bug report
+1. 新規の拡張またはバグ報告をIssueに書き込む
 
-## Submodules
+## サブモジュールの一覧
 - [misteltein/Levenberg-Marquardt](https://github.com/misteltein/Levenberg-Marquardt)
     - [toyaku-phys/eigen-git-mirror](https://github.com/toyaku-phys/eigen-git-mirror)
 - [toyaku-phys/Chaperone](https://github.com/toyaku-phys/Chaperone)
 
 
-## Versioning
-We use [SemVer](http://semver.org/) for versioning. 
-For the versions available, see the tags on this repository.
+## バージョニング
+我々は[SemVer](http://semver.org/) に従ってバージョニングしている. 
 
-## Authors
-* [**Hibiki Itoga**](https://github.com/misteltein) -Key programmer-
-* [**yde**](https://github.com/master-yde) -Discussion partner-
+## 著者
+* [**Hibiki Itoga**](https://github.com/misteltein) -企画とプログラミング-
+* [**yde**](https://github.com/master-yde) -議論相手-
 
-## License
-[MIT-license](LICENSE)
+## ライセンス
+[MIT-ライセンス](LICENSE)
