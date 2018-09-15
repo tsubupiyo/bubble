@@ -24,6 +24,8 @@ typedef std::tuple<double,double,double> Beta;
 
 constexpr size_t N_GRID_POINTS= 50;
 constexpr size_t N_SAMPLING_CURVE = 5;
+constexpr double FIT_LIMIT_VALUE = 10*DBL_EPSILON;
+constexpr double BETA_EPS = 10*DBL_EPSILON;
 #include "grid.hpp"
 
 bool operator<(const k_<size_t>& a, const k_<size_t>& b)
@@ -40,13 +42,12 @@ class Quadratic_function
       Beta beta;//a,b,c
       Quadratic_function();
       Quadratic_function(const double& a_, const double& b_, const double& c_);
-      void set(const size_t& index_grid_point, Vector3D base, const Vector3D& neighbor, const Beta& ref_beta=Beta(0,0,0), bool sign_plus=false);
-      void add(const std::tuple<u_<double>,d_<double> >& pnt);
+      void set(const size_t& index_grid_point, const Vector3D& base, const Vector3D& neighbor, const Beta& ref_beta, bool sign_plus);
+      //void add(const std::tuple<u_<double>,d_<double> >& pnt);
       const Beta& get_parameter()const; 
+      double solve_coross_point()const;
    private:
-      void LM();
-      std::vector<double> ys;
-      std::vector<double> xs;
+      double limit;
       bool f_useable;
    public:
       double mismatch()const;
@@ -93,6 +94,7 @@ Quadratic_function::Quadratic_function()
    f_useable=false;
    xs.resize(N_SAMPLING_CURVE);
    ys.resize(N_SAMPLING_CURVE);
+   limit=DBL_MAX;
 }
 
 Quadratic_function::Quadratic_function(const double& a_, const double& b_, const double& c_)
@@ -101,12 +103,13 @@ Quadratic_function::Quadratic_function(const double& a_, const double& b_, const
    f_useable=false;
    xs.resize(N_SAMPLING_CURVE);
    ys.resize(N_SAMPLING_CURVE);
+   limit=DBL_MAX;
 }
 
 void Quadratic_function::set
 (
    const size_t&   index_grid_point,
-   Vector3D        base,
+   const Vector3D& base,
    const Vector3D& neighbor,
    const Beta&     ref_beta,
    bool sign_plus
@@ -114,6 +117,7 @@ void Quadratic_function::set
 {
    f_useable=false;
    beta=ref_beta;
+   limit=DBL_MAX;
    const auto&   gp       = grid_points.at(index_grid_point);
    const double& gp_theta = (std::get<theta_<double> >(gp)).value();
    const double& gp_phi   = (std::get<phi_<double>   >(gp)).value();
@@ -128,45 +132,87 @@ void Quadratic_function::set
          sin_thteta*sin_phi,
          cos_thteta
       );
+
    ////2. sampling distance with constant u (= unit length)
-   int x=0;
-   int counter=0;
-   bool f_sampling=false;
    double current_y = (base-neighbor).norm();
-   do
+   std::vector<double> xs(N_SAMPLING_CURVE);
+   std::vector<double> ys(N_SAMPLING_CURVE);
+
+   const auto get_sample = [&](bool sign_plus)->void
    {
-      base-=direction;
-      (sign_plus)?(++x):(--x);
-      const double y = (base-neighbor).norm();
-      if(f_sampling)
+      auto base_ = base;
+      int  x       = 0;
+      int  counter = 0;
+      bool   f_sampling = false;
+      double current_y  = (base-neighbor).norm();
+      do
       {
-      std::cout<<x<<" "<<y<<std::endl;
-         xs.at(counter)=x;
-         ys.at(counter)=y;   
-         ++counter;
-      }
-      else
-      {
-         if(sign_plus)
+         if(sign_plus){++x; base += direction;}
+         else         {--x; base -= direction;}
+
+         const double y = (base-neighbor).norm();
+
+         if(f_sampling)
          {
-            f_sampling=((current_y-y)<=0.0)?true:false;
-         }else
-         {
-            f_sampling=((current_y-y)>=0.0)?true:false;
+         //std::cout<<x<<" "<<y<<std::endl;
+            xs.at(counter)=x;
+            ys.at(counter)=y;   
+            ++counter;
          }
-      }
-      current_y=y;
-   }while(counter!=N_SAMPLING_CURVE);
-   //3. get beta
-   LM();
+         else
+         {
+            f_sampling=(sign_plus)?((current_y-y)<=0.0):((current_y-y)>=0.0);
+         }
+         current_y=y;
+      }while(counter!=N_SAMPLING_CURVE);
+   };
+
+   get_sample(false);
+   const Beta lower_side  = LevMar(xs,ys,ref_beta,FIT_LIMIT_VALUE);
+   get_sample(true);
+   const Beta higher_side = LevMar(xs,ys,ref_beta,FIT_LIMIT_VALUE);
+
+   //lineality check
+   if
+   (//type-U
+      (std::abs(std::get<0>(lower_side)-std::get<0>(higher_side))<BETA_EPS)&&
+      (std::abs(std::get<1>(lower_side)-std::get<1>(higher_side))<BETA_EPS)&&
+      (std::abs(std::get<2>(lower_side)-std::get<2>(higher_side))<BETA_EPS)
+   )
+   {
+      beta=lower_side;  
+      return ;
+   }
+
+   assert(std::abs(std::get<0>(lower_side ))<BETA_EPS);
+   assert(std::abs(std::get<0>(higher_side))<BETA_EPS);
+   assert(std::abs(1 + std::get<1>(lower_side ))<BETA_EPS);
+   assert(std::abs(1 - std::get<1>(higher_side))<BETA_EPS);
+
+   limit=(std::get<2>(higher_side)-std::get<2>(lower_side))/(std::get<1>(lower_side)-std::get<1>(higher_side)); 
+   beta=lower_side;
+
+   return ;
 }
 
-void Quadratic_function::add(const std::tuple<u_<double>,d_<double> >& pnt)
+double Quadratic_function::solve()const
 {
-   xs.push_back(std::get<u_<double>>(pnt).value());
-   ys.push_back(std::get<d_<double>>(pnt).value());
-   f_useable=false;
+   const double& a = std::get<0>(beta);
+   const double  b = std::get<1>(beta)-1; 
+   const double& c = std::get<2>(beta);
+   const double root = std::sqrt(b*b-4*a*c);
+   const auto [res_min,res_max] = std::minmax(-(root+b)/(2*a),+(root-b)/(2*a));
+   if(0.0<res_min && res_min<limit){return res_min;}
+   if(0.0<res_max && res_max<limit){return res_max;}
+   return DBL_MAX;
 }
+
+//void Quadratic_function::add(const std::tuple<u_<double>,d_<double> >& pnt)
+//{
+//   xs.push_back(std::get<u_<double>>(pnt).value());
+//   ys.push_back(std::get<d_<double>>(pnt).value());
+//   f_useable=false;
+//}
 
 const Beta& Quadratic_function::get_parameter()const
 {
@@ -174,12 +220,12 @@ const Beta& Quadratic_function::get_parameter()const
    return beta;
 }
 
-void Quadratic_function::LM()
-{
-   if(xs.size()<5)return ;
-   beta = LevMar(xs,ys, beta); 
-   f_useable=true;
-}
+//void Quadratic_function::LM()
+//{
+//   if(xs.size()<5)return ;
+//   beta = LevMar(xs,ys, beta); 
+//   f_useable=true;
+//}
 
 double Quadratic_function::mismatch()const
 {
