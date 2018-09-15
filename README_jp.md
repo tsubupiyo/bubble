@@ -3,19 +3,21 @@
 [![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
 
 
-# bubble
+# bubble [unstable]
 円錐型ボクセル表現した三次元ボロノイ図
 
 ## 概要
-- 序論
-- ボロノイ細胞の離散化
-- 高速な境界面の算出のための最小全域木
-- Tesselation Procedure
-- Contribution
-- Submodules
-- Versioning
-- Authors
-- License
+
+1. [序論](README_jp.md#一般的なボロノイ図の定義)
+2. [ボロノイ細胞の離散化](README_jp.md#ボロノイ細胞の離散化)
+3. [高速な境界面の算出のための最小全域木](README_jp.md#高速な境界面の算出のための最小全域木)
+4. [距離函数の取り扱い](README_jp.md#距離函数の取り扱い)
+5. [ボロノイ細胞を算出するためのアルゴリズム](README_jp.md#ボロノイ細胞を算出するためのアルゴリズム)
+6. [寄与](README_jp.md#寄与)
+7. [サブモジュールの一覧](README_jp.md#サブモジュールの一覧)
+8. [バージョニング](README_jp.md#バージョニング)
+9. [著者](README_jp.md#著者)
+10. [ライセンス](README_jp.md#ライセンス)
 
 ## 一般的なボロノイ図の定義
 距離空間![X](docs/fig/X.svg)において、部分集合![P](docs/fig/P.svg)についてのボロノイ図はボロノイ細胞![Rk](docs/fig/Rk.svg)の集合として定義される。
@@ -49,60 +51,75 @@
 
 ![graph](docs/fig/graph.gif)
 
-### アルゴリズム
-#### 1. 最小の![uk](docs/fig/uk.svg)の検索
-- The minimum ![uk](docs/fig/uk.svg) is approximately equal to half of the distance to ![Pj](docs/fig/Pj.svg) closest to ![Pj](docs/fig/Pj.svg). Also, the direction ![theta_phi](docs/fig/theta_phi.svg) is a direction to ![Pj](docs/fig/Pj.svg).
+### 距離函数の取り扱い
+ここでの距離函数は一般的な距離函数と異なり、ある直線 L= uD+Pkと点Piの距離をuの関数として表したものを指す。
+これは、Pk=Piならばuに比例した形をとる。そして、PiがL上にない時、２次関数の形になる(Pが点であるとき)。
+PiがL上にあるとき、１次関数を組み合わせたようなV字となる。
 
-#### 2. Solve the others ![u_func](docs/fig/u_func.svg)
+この性質のために、単純にパラメータセットとして距離函数を保持することはできない。
+アルゴリズムの内容から、傾きが負である領域についての部分と、どこまで傾きが負であるのか分かるようにしておけば問題なく境界面を解くために利用できる。
 
-- Reference values for a time-optimization:
-
-    - ![u_func_dash](docs/fig/u_func_dash.svg) : u for the neighbor of ![theta_phi](docs/fig/theta_phi.svg)
-    - ![betaset_dash](docs/fig/betaset_dash.svg) : the set of parameter beta of the distance function for each ![P](docs/fig/P.svg) and ![theta_phi_dash](docs/fig/theta_phi_dash.svg) direction
-- Solve recursively
-	1. Pop ![theta_phi](docs/fig/theta_phi.svg) from the stack
-    2. If ![u_func](docs/fig/u_func.svg) is already solved, pop again
-    	- When the stack size is zero, procedure is terminated
-    3. Solve the distance functions (the initial parameter sets is set to ![betaset_dash](docs/fig/betaset_dash.svg) )
-    4. Solve the first cross point of the distance functions (the inital cross point is set to ![u_func_dash](docs/fig/u_func_dash.svg) )
-    5. Stack neighbor grid points of ![theta_phi](docs/fig/theta_phi.svg) using the network of grid points
-    6. Stock the parameters of distance function as ![u_func_dash](docs/fig/u_func_dash.svg)
-        - When ![theta_phi](docs/fig/theta_phi.svg) taken out from the stack, the stocked parameters are a parameters of distance function for neighbor of ![theta_phi](docs/fig/theta_phi.svg)
 
 <img src="docs/fig/cross_point.jpg" width="600px">
 
-#### Remarks
-1. If ![u_func](docs/fig/u_func.svg) is negative or infinite, the ![Rk](docs/fig/Rk_simple.svg) is open
-    
-2. The parameters of the distance function are calculated using [the Levenberg–Marquardt algorithm](https://en.wikipedia.org/wiki/Levenberg–Marquardt_algorithm)
+### ボロノイ細胞を算出するためのアルゴリズム
+
+#### 0. 変数の名前
+
+- P: 母点の集合
+- Pk: 算出するボロノイ細胞に対応する母点
+- S: 頂点のインデックスのスタック
+- U: uの配列
+- D: 全ての母点とPkの距離函数の配列(具体的には函数のパラメータの配列)
+- F: 真偽値の配列
 
 
-## Contribution
+#### 1. 離散化ボロノイ細胞を構成する円錐のうちもっとも小さい円錐を探す
+もっとも小さい円錐は最小の ![uk](docs/fig/uk.svg) をもつ。
+離散化が十分に細かく行われているならば、これの大きさは![Pk](docs/fig/Pk.svg)とそれにもっとも近い他の母点![Pj](docs/fig/Pj.svg)との距離の半分にほぼ等しいだろう。
+
+#### 2. 木を辿ってすべての![u_func](docs/fig/u_func.svg)を算出する
+1. U を最大値で初期化, Fを偽で初期化
+2. S に (theta0,phi0) に対応する頂点のインデックスをプッシュ
+3. (theta0,phi0)についてDを計算([LM法](https://en.wikipedia.org/wiki/Levenberg–Marquardt_algorithm))
+4. S からインデックスをポップ(i)
+5. iに対応する頂点(theta,phi)を取得し、既存のDをもとに(theta,phi)に対応するDを算出
+6. 母点に対応する距離函数と他の母点に対応する距離函数が交わるuのうち、正の範囲における最小のuとしてu(theta,phi)を算出
+7. Fのi番目を真にする
+8. 木をもとに、頂点iの隣接を参照したのち、その隣接頂点に対応するFの内容を参照し、それが偽であったのなら隣接頂点のインデックスをSにプッシュ
+9. Sが空でなければ4に戻る
+
+注意:
+
+- u が最終的に最大値のままならばボロノイ細胞はその方向に開いている
+
+
+
+## 寄与
 [Pull Request](https://github.com/toyaku-phys/bubble/pulls)
 
-1. Fork it ( https://github.com/toyaku-phys/bubble/fork )
-2. Create your feature branch (git checkout -b my-new-feature)
-3. Commit your changes (git commit -am 'Add some feature')
-4. Push to the branch (git push origin my-new-feature)
-5. Create a new Pull Request to the bubble/master branch
+1. フォーク( https://github.com/toyaku-phys/bubble/fork )
+2. 新しい拡張のためのブランチを作成 (git checkout -b my-new-feature)
+3. 変更をコミット (git commit -am 'Add some feature')
+4. 作成したブランチにプッシュ (git push origin my-new-feature)
+5. bubble/master ブランチにプルリクエスト
 
 [Issue](https://github.com/toyaku-phys/bubble/issues)
 
-1. Write your new feature or bug report
+1. 新規の拡張またはバグ報告をIssueに書き込む
 
-## Submodules
+## サブモジュールの一覧
 - [misteltein/Levenberg-Marquardt](https://github.com/misteltein/Levenberg-Marquardt)
     - [toyaku-phys/eigen-git-mirror](https://github.com/toyaku-phys/eigen-git-mirror)
 - [toyaku-phys/Chaperone](https://github.com/toyaku-phys/Chaperone)
 
 
-## Versioning
-We use [SemVer](http://semver.org/) for versioning. 
-For the versions available, see the tags on this repository.
+## バージョニング
+我々は[SemVer](http://semver.org/) に従ってバージョニングしている. 
 
-## Authors
-* [**Hibiki Itoga**](https://github.com/misteltein) -Key programmer-
-* [**yde**](https://github.com/master-yde) -Discussion partner-
+## 著者
+* [**Hibiki Itoga**](https://github.com/misteltein) -企画とプログラミング-
+* [**yde**](https://github.com/master-yde) -議論相手-
 
-## License
-[MIT-license](LICENSE)
+## ライセンス
+[MIT-ライセンス](LICENSE)
