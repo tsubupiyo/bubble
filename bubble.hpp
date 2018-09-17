@@ -22,10 +22,10 @@ NP_MAKE_NAMED_PARAMETER(d);//distance between two points
 
 typedef std::tuple<double,double,double> Beta;
 
-constexpr size_t N_GRID_POINTS= 50;
-constexpr size_t N_SAMPLING_CURVE = 5;
-constexpr double FIT_LIMIT_VALUE = 10*DBL_EPSILON;
-constexpr double BETA_EPS = 10*DBL_EPSILON;
+constexpr size_t N_GRID_POINTS    = 50;
+constexpr size_t N_SAMPLING_CURVE = 10;
+constexpr double FIT_LIMIT_VALUE  = 0.0000000001;
+constexpr double BETA_EPS         = 10*FIT_LIMIT_VALUE;
 #include "grid.hpp"
 
 bool operator<(const k_<size_t>& a, const k_<size_t>& b)
@@ -42,15 +42,12 @@ class Quadratic_function
       Beta beta;//a,b,c
       Quadratic_function();
       Quadratic_function(const double& a_, const double& b_, const double& c_);
-      void set(const size_t& index_grid_point, const Vector3D& base, const Vector3D& neighbor, const Beta& ref_beta, bool sign_plus);
-      //void add(const std::tuple<u_<double>,d_<double> >& pnt);
+      void set(const size_t& index_grid_point, const Vector3D& base, const Vector3D& neighbor, const Beta& ref_beta);
       const Beta& get_parameter()const; 
       double solve_coross_point()const;
    private:
       double limit;
       bool f_useable;
-   public:
-      double mismatch()const;
 };
 
 std::tuple<double,double> solve(const Beta& beta);
@@ -71,7 +68,7 @@ class Voronoi_cell
    private:
    void boundary_fitting();//to determine the cell, fit u to the boundary.
    std::vector<Quadratic_function> qfs;
-   std::vector<Beta> ref_beta;
+   std::vector<Quadratic_function> ref_beta;
 };
 
 class Voronoi_diagram
@@ -92,8 +89,6 @@ Quadratic_function::Quadratic_function()
 {
    beta={0.0,0.0,0.0};
    f_useable=false;
-   xs.resize(N_SAMPLING_CURVE);
-   ys.resize(N_SAMPLING_CURVE);
    limit=DBL_MAX;
 }
 
@@ -101,8 +96,6 @@ Quadratic_function::Quadratic_function(const double& a_, const double& b_, const
 {
    beta={a_,b_,c_};
    f_useable=false;
-   xs.resize(N_SAMPLING_CURVE);
-   ys.resize(N_SAMPLING_CURVE);
    limit=DBL_MAX;
 }
 
@@ -111,8 +104,7 @@ void Quadratic_function::set
    const size_t&   index_grid_point,
    const Vector3D& base,
    const Vector3D& neighbor,
-   const Beta&     ref_beta,
-   bool sign_plus
+   const Beta&     ref_beta
 )
 {
    f_useable=false;
@@ -143,34 +135,40 @@ void Quadratic_function::set
       auto base_ = base;
       int  x       = 0;
       int  counter = 0;
-      bool   f_sampling = false;
-      double current_y  = (base-neighbor).norm();
+      bool f_sampling = false;
+      current_y  = (base_-neighbor).norm();
       do
       {
-         if(sign_plus){++x; base += direction;}
-         else         {--x; base -= direction;}
+         if(sign_plus){++x; base_ += direction;}
+         else         {--x; base_ -= direction;}
+         std::cout<<"X:"<<x<<std::endl;
 
-         const double y = (base-neighbor).norm();
+         const double y = (base_-neighbor).norm();
 
          if(f_sampling)
          {
-         //std::cout<<x<<" "<<y<<std::endl;
+         std::cout<<x<<" "<<y<<std::endl;
             xs.at(counter)=x;
             ys.at(counter)=y;   
             ++counter;
          }
          else
          {
-            f_sampling=(sign_plus)?((current_y-y)<=0.0):((current_y-y)>=0.0);
+            f_sampling=(sign_plus)?((current_y-y)>0.0):((current_y-y)<0.0);
          }
          current_y=y;
       }while(counter!=N_SAMPLING_CURVE);
    };
 
+   std::cout<<"line:"<<__LINE__<<std::endl;
    get_sample(false);
-   const Beta lower_side  = LevMar(xs,ys,ref_beta,FIT_LIMIT_VALUE);
+   std::cout<<"line:"<<__LINE__<<std::endl;
+   const Beta lower_side  = LevMar(xs,ys,ref_beta,FIT_LIMIT_VALUE,100);
+   std::cout<<"line:"<<__LINE__<<std::endl;
    get_sample(true);
-   const Beta higher_side = LevMar(xs,ys,ref_beta,FIT_LIMIT_VALUE);
+   std::cout<<"line:"<<__LINE__<<std::endl;
+   const Beta higher_side = LevMar(xs,ys,ref_beta,FIT_LIMIT_VALUE,100);
+   std::cout<<"line:"<<__LINE__<<std::endl;
 
    //lineality check
    if
@@ -184,6 +182,7 @@ void Quadratic_function::set
       return ;
    }
 
+   printf("%1.15e\n",std::abs(std::get<0>(lower_side )));
    assert(std::abs(std::get<0>(lower_side ))<BETA_EPS);
    assert(std::abs(std::get<0>(higher_side))<BETA_EPS);
    assert(std::abs(1 + std::get<1>(lower_side ))<BETA_EPS);
@@ -191,11 +190,12 @@ void Quadratic_function::set
 
    limit=(std::get<2>(higher_side)-std::get<2>(lower_side))/(std::get<1>(lower_side)-std::get<1>(higher_side)); 
    beta=lower_side;
+   exit(0);
 
    return ;
 }
 
-double Quadratic_function::solve()const
+double Quadratic_function::solve_coross_point()const
 {
    const double& a = std::get<0>(beta);
    const double  b = std::get<1>(beta)-1; 
@@ -207,38 +207,10 @@ double Quadratic_function::solve()const
    return DBL_MAX;
 }
 
-//void Quadratic_function::add(const std::tuple<u_<double>,d_<double> >& pnt)
-//{
-//   xs.push_back(std::get<u_<double>>(pnt).value());
-//   ys.push_back(std::get<d_<double>>(pnt).value());
-//   f_useable=false;
-//}
-
 const Beta& Quadratic_function::get_parameter()const
 {
    assert(f_useable);
    return beta;
-}
-
-//void Quadratic_function::LM()
-//{
-//   if(xs.size()<5)return ;
-//   beta = LevMar(xs,ys, beta); 
-//   f_useable=true;
-//}
-
-double Quadratic_function::mismatch()const
-{
-   double sum_sqr_error=0.0;
-   for(size_t i=0,size=xs.size();i<size;++i)
-   {
-      sum_sqr_error+=
-      std::pow
-      (
-         ys.at(i)-(std::get<0>(beta)*sqr(xs.at(i))+std::get<1>(beta)*xs.at(i)+std::get<2>(beta)),2
-      );
-   }
-   return std::sqrt(sum_sqr_error/(int)(xs.size()));
 }
 
 std::set<k_<size_t> > Voronoi_cell::get_neighbor()const
@@ -355,16 +327,23 @@ void Voronoi_cell::boundary_fitting()
    }
    u.at(idx_grid_point_init).value()=0.5*min_distance;
    filled[idx_grid_point_init]=true;
-   //std::cout<<"u init: "<<u.at(idx_grid_point_init).value()<<std::endl;
+   std::cout<<"u init: "<<u.at(idx_grid_point_init).value()<<std::endl;
    const std::vector<Vector3D>& ps = *P;
+   std::cout<<"LINE:"<<__LINE__<<std::endl;
    for(size_t i=0,size=ps.size();i<size;++i)
    {
-      qfs.at(i).set(idx_grid_point_init,ps.at(k.value()),ps.at(i));
-      ref_beta.at(i)=qfs.at(i).get_parameter();
+      qfs.at(i).set
+      (
+         idx_grid_point_init,ps.at(k.value()),ps.at(i),
+         std::tuple<double,double,double>(1.0,1.0,1.0)
+      );
+      ref_beta.at(i)=qfs.at(i);
    }
+   std::cout<<"LINE:"<<__LINE__<<std::endl;
    std::stack<std::tuple<size_t,size_t> > stack;//2nd is ref-index of 1st(k)
    stack.push({idx_grid_point_init,idx_grid_point_init});
    K.clear();
+   std::cout<<"LINE:"<<__LINE__<<std::endl;
    while(!stack.empty())
    {
       const auto [top,idx_ref_u] = stack.top(); stack.pop();
@@ -372,11 +351,12 @@ void Voronoi_cell::boundary_fitting()
       //if(top!=idx_grid_point_init && DBL_MAX!=u.at(top).value()){continue;}//In this case, u(pos) is calculated-grid-point.
       for(size_t i=0,size=ps.size();i<size;++i)//estimation of distance function for each k
       {
-         qfs.at(i).set(top,ps.at(k.value()),ps.at(i),ref_beta.at(i));
+         qfs.at(i).set(top,ps.at(k.value()),ps.at(i),ref_beta.at(i).get_parameter());
       }
       for(size_t i=0,size=ps.size();i<size;++i)//To stock & To lighten the next estimation
       {
-         ref_beta.at(i)=qfs.at(i).get_parameter();
+         //ref_beta.at(i)=qfs.at(i).get_parameter();
+         ref_beta.at(i)=qfs.at(i);
       }
       //find min(positive u)
       double min(DBL_MAX);//positive, and 0.5*min_distance<=
@@ -385,16 +365,11 @@ void Voronoi_cell::boundary_fitting()
       {
          if(k.value()==j){continue;}
          std::cout<<"j:"<<j<<" ";
-         const auto [alpha,bravo] = solve(ref_beta.at(j));
-         if((alpha>=0.0) && min>alpha)
+         const double alpha = ref_beta.at(j).solve_coross_point();
+         if(min>alpha)
          {
             min=alpha;
-            k_neighbor=j;
-         }
-         if((bravo>=0.0) && min>bravo)
-         {
-            min=bravo;
-            k_neighbor=j;
+            k_neighbor=j; 
          }
       }
       u.at(top).value()=min;

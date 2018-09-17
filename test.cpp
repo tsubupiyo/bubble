@@ -2,22 +2,22 @@
 
 int main()
 {
-   //preview network
-   std::cout<<"# Bead 0"<<std::endl;
-   for(size_t i=0,size=grid_points.size();i<size;++i)
-   {
-      std::cout<<i<<" "<<S2R(grid_points.at(i))<<std::endl;
-   }
-   std::cout<<"# Bond 0"<<std::endl;
-   for(size_t i=0,size=grid_points.size();i<size;++i)
-   {
-      const auto& nbrs = network.at(i);   
-      for(auto it=nbrs.begin();it!=nbrs.end();++it)
-      {
-         std::cout<<i<<" "<<*it<<std::endl;
-      }
-   }
-   exit(0);
+   ////preview network
+   //std::cout<<"# Bead 0"<<std::endl;
+   //for(size_t i=0,size=grid_points.size();i<size;++i)
+   //{
+   //   std::cout<<i<<" "<<S2R(grid_points.at(i))<<std::endl;
+   //}
+   //std::cout<<"# Bond 0"<<std::endl;
+   //for(size_t i=0,size=grid_points.size();i<size;++i)
+   //{
+   //   const auto& nbrs = network.at(i);   
+   //   for(auto it=nbrs.begin();it!=nbrs.end();++it)
+   //   {
+   //      std::cout<<i<<" "<<*it<<std::endl;
+   //   }
+   //}
+   //exit(0);
 
    constexpr int N=5;
    std::vector<Vector3D> cubic;
