@@ -1,6 +1,3 @@
 [submodule "Chaperone"]
 	path = Chaperone
 	url = https://github.com/toyaku-phys/Chaperone.git
-[submodule "Levenberg-Marquardt"]
-	path = Levenberg-Marquardt
-	url = https://github.com/misteltein/Levenberg-Marquardt.git
