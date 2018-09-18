@@ -110,7 +110,30 @@ double Voronoi_cell::get_volume()const
 
 void Voronoi_cell::boundary_fitting()
 {
-   #warning //書いてね
+   const auto u_boundary = []
+   (
+      const Vector3D& Pk,
+      const Vector3D& Pj,
+      const size_t index_of_grid_point
+   )
+   ->double
+   {
+   #warning //TODO::書いてね(+_+) 長くなるだろうからラムダじゃなくて良い
+   };
+
+   const std::vector<Vector3D>& ps = *P;
+   for(size_t idx_gp=0;idx_gp<N_GRID_POINTS;++idx_gp)
+   {
+      double u_min=DBL_MAX;
+      size_t neighbor = 0;
+      for(size_t idx_p=0,Np=ps.size();idx_p<Np;++idx_p)
+      {
+         const double u_tmp = u_boundary(/*TODO*/);
+         if(u_min>u_tmp){u_min=u_tmp;neighbor=idx_p;}
+      }
+      u.at(idx_gp).value()=u_min; 
+      K.insert(neighbor);
+   }
 }
 
 Voronoi_diagram::Voronoi_diagram(std::vector<Vector3D>* const ps)
