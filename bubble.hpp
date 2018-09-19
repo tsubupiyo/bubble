@@ -167,7 +167,7 @@ void Voronoi_cell::boundary_fitting()
          if(u_min>u_tmp){u_min=u_tmp;neighbor=idx_p;}
       }
       u.at(idx_gp).value()=u_min; 
-      K.insert((k_<size_t>)neighbor);
+      K.insert(k_<size_t>(neighbor));
    }
 }
 
