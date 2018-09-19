@@ -11,7 +11,7 @@
 #include "Chaperone/NamedParameter.hpp"
 #include "Chaperone/Vector3D.hpp"
 #include "ReadFile.hpp"
-#include "Logger.hpp"
+#include "Chaperone/Logger.hpp"
 #include <stack>
 
 NP_MAKE_NAMED_PARAMETER(theta);//[0:pi]
