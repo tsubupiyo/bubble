@@ -129,23 +129,23 @@ void Voronoi_cell::boundary_fitting()
       if(U_mid<d_min){ return DBL_MAX;}
       if(U_mid>d_min)
       {
-         double u = 0;
-         double u_new=0;
+         double u_current = 0;
+         double u_new = 0;
          int i=0;
          double d=DBL_MAX;
          constexpr int I_MAX=100;
          do
          {  
-            u=u_new;
-            double f=sqrt((u-U_mid)*(u-U_mid)+d_min*d_min)-u;
-            double df=(u-U_mid)/sqrt((u-U_mid)*(u-U_mid)+d_min*d_min)-1;
+            u_current=u_new;
+            double f=sqrt((u_current-U_mid)*(u_current-U_mid)+d_min*d_min)-u_current;
+            double df=(u_current-U_mid)/sqrt((u_current-U_mid)*(u_current-U_mid)+d_min*d_min)-1;
             d=-f/df;
             u_new+=d;
             i++;
          }while(std::abs(d)>EPS&i<I_MAX);
          if(i==I_MAX){FATAL("cannot find u between I_MAX steps");exit(1);}
-         if(u<0){FATAL("u is a minus quantity");exit(1);}
-         return u;
+         if(u_current<0){FATAL("u is a minus quantity");exit(1);}
+         return u_current;
       }
       FATAL("dishonesty U_mid or d_min");exit(1);
       return DBL_MAX;
@@ -167,7 +167,7 @@ void Voronoi_cell::boundary_fitting()
          if(u_min>u_tmp){u_min=u_tmp;neighbor=idx_p;}
       }
       u.at(idx_gp).value()=u_min; 
-      K.insert(neighbor);
+      K.insert((k_<size_t>)neighbor);
    }
 }
 

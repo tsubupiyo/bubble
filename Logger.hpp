@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdarg>
 
 struct log_level
 {
