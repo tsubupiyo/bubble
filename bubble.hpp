@@ -11,6 +11,7 @@
 #include "Chaperone/NamedParameter.hpp"
 #include "Chaperone/Vector3D.hpp"
 #include "ReadFile.hpp"
+#include "Logger.hpp"
 #include <stack>
 
 NP_MAKE_NAMED_PARAMETER(theta);//[0:pi]
@@ -114,21 +115,55 @@ void Voronoi_cell::boundary_fitting()
    (
       const Vector3D& Pk,
       const Vector3D& Pj,
-      const size_t index_of_grid_point
+      const Vector3D& r
+      //const size_t index_of_grid_point
    )
    ->double
    {
-   #warning //TODO::書いてね(+_+) 長くなるだろうからラムダじゃなくて良い
+      constexpr double EPS = DBL_EPSILON;
+      const double U_mid=(r*(Pj-Pk))/r.norm2();
+      const double d_min=(U_mid*r+Pk-Pj).norm(); 
+      if(U_mid<0){FATAL("U_mid is a minus quantity");exit(1);}
+ 
+      if((U_mid-d_min)<EPS){return U_mid;}
+      if(U_mid<d_min){ return DBL_MAX;}
+      if(U_mid>d_min)
+      {
+         double u = 0;
+         double u_new=0;
+         int i=0;
+         double d=DBL_MAX;
+         constexpr int I_MAX=100;
+         do
+         {  
+            u=u_new;
+            double f=sqrt((u-U_mid)*(u-U_mid)+d_min*d_min)-u;
+            double df=(u-U_mid)/sqrt((u-U_mid)*(u-U_mid)+d_min*d_min)-1;
+            d=-f/df;
+            u_new+=d;
+            i++;
+         }while(std::abs(d)>EPS&i<I_MAX);
+         if(i==I_MAX){FATAL("cannot find u between I_MAX steps");exit(1);}
+         if(u<0){FATAL("u is a minus quantity");exit(1);}
+         return u;
+      }
+      FATAL("dishonesty U_mid or d_min");exit(1);
+      return DBL_MAX;
    };
 
    const std::vector<Vector3D>& ps = *P;
+   const Vector3D pk = ps.at(k.value());
    for(size_t idx_gp=0;idx_gp<N_GRID_POINTS;++idx_gp)
    {
       double u_min=DBL_MAX;
       size_t neighbor = 0;
+      const Vector3D gp = S2R(grid_points.at(idx_gp));
+      const Vector3D r = (gp-pk)/(gp-pk).norm();
       for(size_t idx_p=0,Np=ps.size();idx_p<Np;++idx_p)
       {
-         const double u_tmp = u_boundary(/*TODO*/);
+         if(idx_p==k.value()){continue;}
+         const Vector3D pj  = ps.at(idx_p);
+         const double u_tmp = u_boundary(pk,pj,r);
          if(u_min>u_tmp){u_min=u_tmp;neighbor=idx_p;}
       }
       u.at(idx_gp).value()=u_min; 
